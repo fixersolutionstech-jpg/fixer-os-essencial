@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#0A1220"/>
+<meta name="description" content="Fixer OS Essencial — centro de comando dos módulos Fixer OS"/>
+<title>Fixer OS Essencial</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:      #0A1220;
+  --panel:    #121F38;
+  --panel2:   #16294A;
+  --line:     #223258;
+  --line2:    #2C3E68;
+  --sand:     #E8DCC8;
+  --terra:    #E0692F;
+  --terra-lt: #F0A374;
+  --teal:     #3DB9A0;
+  --amber:    #E0A62F;
+  --red:      #E0522F;
+  --text:     #F1EEE6;
+  --text2:    #9FADC7;
+  --text3:    #5C6B8C;
+  --serif:    'Fraunces', serif;
+  --sans:     'Space Grotesk', sans-serif;
+  --mono:     'JetBrains Mono', monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ink);color:var(--text);font-family:var(--sans);min-height:100dvh;-webkit-font-smoothing:antialiased}
+input,button{font-family:inherit}
+::selection{background:rgba(224,105,47,.35)}
+
+/* ═══════════════ LOGIN GATE ═══════════════ */
+#gate{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+#gate::before{content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50%);width:900px;height:600px;
+  background:radial-gradient(ellipse, rgba(224,105,47,.12) 0%, transparent 65%);pointer-events:none}
+.gate-card{position:relative;width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:34px 30px}
+.gate-mark{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--terra),#B94F1F);
+  display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:0 6px 20px rgba(224,105,47,.35)}
+.gate-mark svg{width:22px;height:22px}
+.gate-title{font-family:var(--serif);font-size:24px;font-weight:600;margin-bottom:4px}
+.gate-sub{font-size:13px;color:var(--text3);font-family:var(--mono);margin-bottom:26px}
+.gate-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.gate-field label{font-size:12px;color:var(--text2);font-weight:500}
+.gate-field input{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;color:var(--text);
+  padding:13px 14px;font-size:14px;outline:none;transition:border-color .15s}
+.gate-field input:focus{border-color:var(--terra)}
+.gate-btn{width:100%;margin-top:6px;background:linear-gradient(135deg,var(--terra),#C85826);color:#fff;border:none;
+  padding:14px;border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;transition:transform .15s}
+.gate-btn:hover:not(:disabled){transform:translateY(-1px)}
+.gate-btn:disabled{opacity:.5;cursor:not-allowed}
+.gate-erro{color:var(--red);font-size:12.5px;min-height:16px;margin-top:10px}
+.gate-foot{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;color:var(--text3);text-align:center;font-family:var(--mono)}
+
+/* ═══════════════ APP ═══════════════ */
+#app{display:none;min-height:100dvh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(10,18,32,.92);backdrop-filter:blur(10px);z-index:20}
+.tb-brand{display:flex;align-items:center;gap:10px}
+.tb-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--terra),#B94F1F);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tb-mark svg{width:16px;height:16px}
+.tb-name{font-family:var(--serif);font-size:16px;font-weight:600}
+.tb-right{display:flex;align-items:center;gap:14px}
+.tb-empresa{font-family:var(--mono);font-size:11.5px;color:var(--text2)}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--panel2);border:1px solid var(--line2);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--terra-lt);cursor:pointer}
+
+.wrap{max-width:960px;margin:0 auto;padding:28px 22px 60px}
+
+.hello{margin-bottom:26px}
+.hello-eyebrow{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.hello-title{font-family:var(--serif);font-size:28px;font-weight:600;letter-spacing:-.5px}
+
+/* KPIs */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:32px}
+@media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.kpi-val{font-family:var(--serif);font-size:24px;font-weight:600}
+.kpi-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.04em}
+
+/* Section head */
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.sec-title{font-family:var(--serif);font-size:19px;font-weight:600}
+.sec-link{font-family:var(--mono);font-size:11.5px;color:var(--text3);text-decoration:none;cursor:pointer}
+.sec-link:hover{color:var(--terra-lt)}
+
+/* Módulos */
+.mod-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:36px}
+@media(max-width:760px){.mod-row{grid-template-columns:1fr}}
+.mod-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;cursor:pointer;
+  transition:border-color .2s,transform .2s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:12px;position:relative}
+.mod-card:hover{border-color:var(--line2);transform:translateY(-2px)}
+.mod-card.locked{opacity:.5;cursor:not-allowed}
+.mod-card.locked:hover{transform:none}
+.mod-top2{display:flex;align-items:flex-start;justify-content:space-between}
+.mod-icon2{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:var(--mod-bg,rgba(224,105,47,.12));border:1px solid var(--mod-border,rgba(224,105,47,.3))}
+.mod-icon2 svg{width:19px;height:19px;stroke:var(--mod-accent,var(--terra-lt))}
+.lock-badge{font-family:var(--mono);font-size:9px;color:var(--text3);border:1px solid var(--line2);padding:3px 8px;border-radius:99px}
+.mod-name2{font-size:15px;font-weight:600}
+.mod-tag2{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin-top:2px}
+.mod-arrow{margin-top:auto;display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--mod-accent,var(--terra-lt))}
+.mod-arrow svg{width:13px;height:13px;transition:transform .15s}
+.mod-card:hover .mod-arrow svg{transform:translateX(3px)}
+
+/* Histórico */
+.hist-list{display:flex;flex-direction:column;gap:8px;margin-bottom:36px}
+.hist-item{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px}
+.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hist-dot.concluido{background:var(--teal)}
+.hist-dot.erro{background:var(--red)}
+.hist-dot.pendente{background:var(--amber)}
+.hist-main{flex:1;min-width:0}
+.hist-resumo{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-meta{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin-top:2px}
+.hist-link{font-family:var(--mono);font-size:11px;color:var(--terra-lt);text-decoration:none;white-space:nowrap}
+.hist-empty{text-align:center;padding:34px 20px;color:var(--text3);font-size:13px;background:var(--panel);border:1px dashed var(--line2);border-radius:14px;line-height:1.6}
+
+/* Configurações */
+.cfg-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+.cfg-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.cfg-row:last-of-type{border-bottom:none}
+.cfg-lbl{font-size:13px;color:var(--text2)}
+.cfg-val{font-family:var(--mono);font-size:12.5px;color:var(--text)}
+.cfg-form{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.cfg-form input{background:var(--panel2);border:1px solid var(--line2);border-radius:9px;color:var(--text);padding:11px 13px;font-size:13px;outline:none}
+.cfg-form input:focus{border-color:var(--terra)}
+.cfg-btn{align-self:flex-start;background:var(--panel2);border:1px solid var(--line2);color:var(--text);
+  padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.cfg-btn:hover{border-color:var(--terra);color:var(--terra-lt)}
+.cfg-msg{font-size:12px;min-height:16px;margin-top:4px}
+.cfg-msg.ok{color:var(--teal)}
+.cfg-msg.err{color:var(--red)}
+.cfg-logout{color:var(--red);font-size:12.5px;cursor:pointer;font-family:var(--mono);margin-top:18px;display:inline-block}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ GATE (login) ═══════════════ -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4H4zM4 10h10v4H4zM4 16h16v4H4z"/></svg></div>
+    <div class="gate-title">Fixer OS Essencial</div>
+    <div class="gate-sub">Centro de comando · acesso à conta</div>
+
+    <div class="gate-field">
+      <label>Email</label>
+      <input id="in-email" type="email" placeholder="nome@escritorio.co.mz" autocomplete="username"/>
+    </div>
+    <div class="gate-field">
+      <label>Password</label>
+      <input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="gate-btn" id="btn-login">Entrar</button>
+    <div class="gate-erro" id="gate-erro"></div>
+
+    <div class="gate-foot">Fixer Solutions Technologies · Maputo</div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP (dashboard) ═══════════════ -->
+<div id="app">
+
+  <div class="topbar">
+    <div class="tb-brand">
+      <div class="tb-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4H4zM4 10h10v4H4zM4 16h16v4H4z"/></svg></div>
+      <div class="tb-name">Fixer OS</div>
+    </div>
+    <div class="tb-right">
+      <span class="tb-empresa" id="tb-empresa">—</span>
+      <div class="tb-avatar" id="tb-avatar" title="Definições" onclick="irPara('config')">?</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard">
+      <div class="hello">
+        <div class="hello-eyebrow">Bom trabalho</div>
+        <div class="hello-title" id="hello-title">Olá.</div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-val" id="kpi-total">0</div><div class="kpi-lbl">Operações (30 dias)</div></div>
+        <div class="kpi"><div class="kpi-val" id="kpi-fiscal" style="color:#4C8FE0">0</div><div class="kpi-lbl">FiscalMoz</div></div>
+        <div class="kpi"><div class="kpi-val" id="kpi-recon" style="color:#3DB9A0">0</div><div class="kpi-lbl">ReconBank</div></div>
+        <div class="kpi"><div class="kpi-val" id="kpi-docscan" style="color:#E0692F">0</div><div class="kpi-lbl">DocScan</div></div>
+      </div>
+
+      <div class="sec-head"><div class="sec-title">Módulos</div></div>
+      <div class="mod-row" id="mod-row"></div>
+
+      <div class="sec-head">
+        <div class="sec-title">Histórico recente</div>
+        <span class="sec-link" onclick="carregarHistorico()">Actualizar</span>
+      </div>
+      <div class="hist-list" id="hist-list">
+        <div class="hist-empty">A carregar histórico...</div>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div id="view-config" style="display:none">
+      <div class="sec-head"><div class="sec-title">Definições da conta</div><span class="sec-link" onclick="irPara('dashboard')">← Voltar</span></div>
+
+      <div class="cfg-card">
+        <div class="cfg-row"><span class="cfg-lbl">Email</span><span class="cfg-val" id="cfg-email">—</span></div>
+        <div class="cfg-row"><span class="cfg-lbl">Empresa</span><span class="cfg-val" id="cfg-empresa">—</span></div>
+        <div class="cfg-row"><span class="cfg-lbl">Perfil</span><span class="cfg-val" id="cfg-role">—</span></div>
+        <div class="cfg-row"><span class="cfg-lbl">Módulos activos</span><span class="cfg-val" id="cfg-modulos">—</span></div>
+
+        <div class="cfg-form">
+          <label style="font-size:12px;color:var(--text2)">Alterar password</label>
+          <input id="cfg-pass-nova" type="password" placeholder="Nova password (mín. 8 caracteres)"/>
+          <button class="cfg-btn" onclick="alterarPassword()">Guardar nova password</button>
+          <div class="cfg-msg" id="cfg-msg"></div>
+        </div>
+
+        <span class="cfg-logout" onclick="FixerAuth.logout()">Terminar sessão</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   FixerAuth — versão embutida (hub), com suporte a SSO por
+   querystring quando abre um módulo externo.
+   ================================================================ */
+const FixerAuth = (function () {
+  const AUTH_GAS_URL = 'COLOCA_AQUI_O_URL_DO_WEB_APP_AUTH_GS'; // /exec do Auth.gs
+  const TOKEN_KEY = 'fixeros_auth_token';
+  const USER_KEY  = 'fixeros_auth_user';
+
+  function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+  function getUser()  { try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch(e){ return null; } }
+  function limparSessao() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
+
+  async function login(email, password) {
+    const resp = await fetch(AUTH_GAS_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ accao: 'login', email, password })
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.erro || 'Login falhou');
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.utilizador));
+    return data.utilizador;
+  }
+
+  function pareceValido() {
+    const token = getToken();
+    if (!token || token.indexOf('.') === -1) return false;
+    try {
+      const payloadB64 = token.split('.')[0];
+      const payload = atob(payloadB64.replace(/-/g,'+').replace(/_/g,'/'));
+      const expiraEm = Number(payload.split('|')[4]);
+      return Date.now() < expiraEm;
+    } catch(e) { return false; }
+  }
+
+  function logout() { limparSessao(); location.reload(); }
+
+  async function chamar(accao, extra) {
+    const resp = await fetch(AUTH_GAS_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(Object.assign({ accao, token: getToken() }, extra || {}))
+    });
+    return resp.json();
+  }
+
+  return { login, logout, getToken, getUser, pareceValido, chamar, AUTH_GAS_URL };
+})();
+
+/* ================================================================
+   MÓDULOS — URLs reais + esquema de SSO por querystring.
+   Cada módulo, quando integrado, deve ler ?fixerosToken=... na
+   URL e, se válido para o seu domínio de módulo, gravá-lo como se
+   tivesse feito login normalmente — evitando pedir password de novo.
+   ================================================================ */
+const MODULOS = [
+  { id:'fiscal',    nome:'FiscalMoz IVA Assistant', tag:'declaração de IVA',
+    url:'https://fixersolutionstech-jpg.github.io/FiscalmozIVA/',
+    accent:'#4C8FE0', bg:'rgba(76,143,224,.12)', border:'rgba(76,143,224,.3)',
+    icon:'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 18h4"/>' },
+  { id:'reconbank', nome:'ReconBank AI', tag:'reconciliação bancária',
+    url:'https://fixersolutionstech-jpg.github.io/Reconbank/',
+    accent:'#3DB9A0', bg:'rgba(61,185,160,.12)', border:'rgba(61,185,160,.3)',
+    icon:'<path d="M7 16H3m0 0 4-4M3 16l4 4M17 8h4m0 0-4-4m4 4-4 4"/>' },
+  { id:'docscan',   nome:'DocScan AI', tag:'OCR e classificação PGC',
+    url:'https://fixersolutionstech-jpg.github.io/Fixer-DocScan/',
+    accent:'#E0692F', bg:'rgba(224,105,47,.12)', border:'rgba(224,105,47,.3)',
+    icon:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' }
+];
+
+let ultimoHistorico = [];
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if (FixerAuth.pareceValido()) mostrarApp();
+  else mostrarGate();
+});
+
+function mostrarGate() {
+  document.getElementById('gate').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+async function mostrarApp() {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  const u = FixerAuth.getUser();
+  if (!u) { mostrarGate(); return; }
+
+  document.getElementById('tb-empresa').textContent = u.empresa || '';
+  document.getElementById('tb-avatar').textContent = (u.email || '?').charAt(0).toUpperCase();
+  document.getElementById('hello-title').textContent = 'Olá, ' + (u.empresa || u.email) + '.';
+
+  document.getElementById('cfg-email').textContent = u.email;
+  document.getElementById('cfg-empresa').textContent = u.empresa || '—';
+  document.getElementById('cfg-role').textContent = u.role || '—';
+  document.getElementById('cfg-modulos').textContent = (u.modulos || []).join(', ') || 'nenhum';
+
+  renderModulos(u.modulos || []);
+  carregarHistorico();
+}
+
+// ── LOGIN ──
+document.getElementById('btn-login').addEventListener('click', tentarLogin);
+document.getElementById('in-pass').addEventListener('keydown', e => { if (e.key === 'Enter') tentarLogin(); });
+
+async function tentarLogin() {
+  const btn = document.getElementById('btn-login');
+  const erroEl = document.getElementById('gate-erro');
+  erroEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'A entrar...';
+  try {
+    await FixerAuth.login(
+      document.getElementById('in-email').value.trim(),
+      document.getElementById('in-pass').value
+    );
+    mostrarApp();
+  } catch (e) {
+    erroEl.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+// ── NAVEGAÇÃO INTERNA ──
+function irPara(view) {
+  document.getElementById('view-dashboard').style.display = view === 'dashboard' ? 'block' : 'none';
+  document.getElementById('view-config').style.display = view === 'config' ? 'block' : 'none';
+}
+
+// ── MÓDULOS ──
+function renderModulos(modulosDoUtilizador) {
+  const c = document.getElementById('mod-row');
+  c.innerHTML = '';
+  MODULOS.forEach(m => {
+    const temAcesso = modulosDoUtilizador.indexOf(m.id) !== -1;
+    const el = document.createElement(temAcesso ? 'a' : 'div');
+    el.className = 'mod-card' + (temAcesso ? '' : ' locked');
+    if (temAcesso) {
+      // Handoff de sessão: o módulo recebe o token na URL e pode
+      // auto-preencher a sessão dele, evitando novo login manual.
+      el.href = m.url + '?fixerosToken=' + encodeURIComponent(FixerAuth.getToken());
+      el.target = '_blank';
+      el.rel = 'noopener';
+    }
+    el.style.setProperty('--mod-accent', m.accent);
+    el.style.setProperty('--mod-bg', m.bg);
+    el.style.setProperty('--mod-border', m.border);
+    el.innerHTML = `
+      <div class="mod-top2">
+        <div class="mod-icon2"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${m.icon}</svg></div>
+        ${temAcesso ? '' : '<span class="lock-badge">Sem acesso</span>'}
+      </div>
+      <div>
+        <div class="mod-name2">${m.nome}</div>
+        <div class="mod-tag2">${m.tag}</div>
+      </div>
+      ${temAcesso ? `<div class="mod-arrow">Abrir módulo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></div>` : `<div class="mod-arrow" style="color:var(--text3)">Pedir acesso ao administrador</div>`}
+    `;
+    c.appendChild(el);
+  });
+}
+
+// ── HISTÓRICO ──
+async function carregarHistorico() {
+  const el = document.getElementById('hist-list');
+  el.innerHTML = '<div class="hist-empty">A carregar histórico...</div>';
+  try {
+    const data = await FixerAuth.chamar('listarOperacoes', { limite: 20 });
+    if (!data.ok) throw new Error(data.erro || 'Falha ao carregar histórico');
+    ultimoHistorico = data.operacoes || [];
+    renderHistorico(ultimoHistorico);
+    renderKpis(ultimoHistorico);
+  } catch (e) {
+    el.innerHTML = `<div class="hist-empty">Não foi possível carregar o histórico agora.<br/><span style="font-family:var(--mono);font-size:11px">${e.message}</span></div>`;
+  }
+}
+
+function renderHistorico(ops) {
+  const el = document.getElementById('hist-list');
+  if (!ops.length) {
+    el.innerHTML = `<div class="hist-empty">Ainda sem operações registadas aqui.<br/>Processa algo num módulo — vai aparecer neste histórico automaticamente.</div>`;
+    return;
+  }
+  el.innerHTML = ops.map(o => {
+    const data = new Date(o.timestamp);
+    const dataFmt = isNaN(data) ? o.timestamp : data.toLocaleString('pt-MZ', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    return `
+      <div class="hist-item">
+        <span class="hist-dot ${o.estado || 'concluido'}"></span>
+        <div class="hist-main">
+          <div class="hist-resumo">${o.resumo || '(sem resumo)'}</div>
+          <div class="hist-meta">${o.modulo} · ${dataFmt} · ${o.utilizador}</div>
+        </div>
+        ${o.linkPrincipal ? `<a class="hist-link" href="${o.linkPrincipal}" target="_blank" rel="noopener">Abrir →</a>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function renderKpis(ops) {
+  const trintaDias = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const recentes = ops.filter(o => new Date(o.timestamp).getTime() >= trintaDias);
+  document.getElementById('kpi-total').textContent = recentes.length;
+  document.getElementById('kpi-fiscal').textContent = recentes.filter(o => o.modulo === 'fiscal').length;
+  document.getElementById('kpi-recon').textContent = recentes.filter(o => o.modulo === 'reconbank').length;
+  document.getElementById('kpi-docscan').textContent = recentes.filter(o => o.modulo === 'docscan').length;
+}
+
+// ── CONFIGURAÇÕES ──
+async function alterarPassword() {
+  const msgEl = document.getElementById('cfg-msg');
+  const nova = document.getElementById('cfg-pass-nova').value;
+  msgEl.className = 'cfg-msg'; msgEl.textContent = '';
+  if (!nova || nova.length < 8) {
+    msgEl.className = 'cfg-msg err'; msgEl.textContent = 'A password deve ter pelo menos 8 caracteres.';
+    return;
+  }
+  try {
+    const data = await FixerAuth.chamar('alterarPassword', { novaPassword: nova });
+    if (!data.ok) throw new Error(data.erro || 'Falha ao alterar password');
+    msgEl.className = 'cfg-msg ok'; msgEl.textContent = 'Password alterada com sucesso.';
+    document.getElementById('cfg-pass-nova').value = '';
+  } catch (e) {
+    msgEl.className = 'cfg-msg err'; msgEl.textContent = e.message;
+  }
+}
+</script>
+</body>
+</html>

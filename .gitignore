@@ -1,0 +1,18 @@
+# Seguranca Fixer: backend Apps Script e segredos nunca vao para o GitHub (repos publicos)
+*.gs
+*.gs.txt
+gas/
+atualizacao/
+*.zip
+*.txt
+IDs_*.md
+.env
+.env.*
+*credential*
+*.key
+*.pem
+.clasp.json
+.clasprc.json
+
+# copias antigas pre-sync (GitHub e a fonte da verdade; backup em FIXER/_SISTEMA)
+New folder/

@@ -1,462 +1,1044 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-MZ">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="theme-color" content="#0A1220"/>
-<meta name="description" content="Fixer OS Essencial — centro de comando dos módulos Fixer OS"/>
+<meta name="theme-color" content="#1A202B"/>
+<meta name="referrer" content="no-referrer"/>
 <title>Fixer OS Essencial</title>
 <link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('fixeros_tema') || 'auto';
+    var d = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-tema', d ? 'dark' : 'light');
+  } catch (e) {}
+})();
+</script>
 <style>
-:root{
-  --ink:      #0A1220;
-  --panel:    #121F38;
-  --panel2:   #16294A;
-  --line:     #223258;
-  --line2:    #2C3E68;
-  --sand:     #E8DCC8;
-  --terra:    #E0692F;
-  --terra-lt: #F0A374;
-  --teal:     #3DB9A0;
-  --amber:    #E0A62F;
-  --red:      #E0522F;
-  --text:     #F1EEE6;
-  --text2:    #9FADC7;
-  --text3:    #5C6B8C;
-  --serif:    'Fraunces', serif;
-  --sans:     'Space Grotesk', sans-serif;
-  --mono:     'JetBrains Mono', monospace;
+
+:root {
+  --side:       #0A4A3C;
+  --side-2:     #073A2F;
+  --side-act:   #17684F;
+  --verde:      #0E6B54;
+  --verde-esc:  #0A4A3C;
+  --verde-cl:   #E5F3EC;
+  --menta:      #F1F8F3;
+  --laranja:    #F28A2E;
+  --laranja-cl: #FEEBD6;
+  --ouro:       #F5B83D;
+  --ouro-cl:    #FFF3D1;
+  --ocre:       #8A6100;
+  --vermelho:   #D21034;
+  --vermelho-cl:#FDE7EB;
+  --roxo:       #7A5BC9;
+  --roxo-cl:    #ECE6FA;
+  --preto:      #111815;
+
+  --bg:      #F4F7F2;
+  --white:   #FFFFFF;
+  --surface: #F1F5EF;
+  --border:  #DDE6DC;
+  --text:    #15241E;
+  --text2:   #4B5F56;
+  --text3:   #7C8F85;
+
+  --shadow-sm: 0 1px 2px rgba(10,74,60,.06);
+  --shadow-md: 0 6px 20px rgba(10,74,60,.08);
+  --r:  10px;
+  --r2: 14px;
+  --r3: 18px;
+  --sans: 'Outfit', system-ui, sans-serif;
+  --mono: 'DM Mono', ui-monospace, monospace;
+
+  /* usados pelo modal de confirmação (JS) */
+  --panel: var(--white);
+  --tx2:   var(--text2);
+  --line:  var(--border);
+  --brand: var(--verde);
+  --sbw:   232px;
+  --hero-a: rgba(255,246,224,.95); --hero-b: rgba(255,246,224,0); --h1c: #0A4A3C; --drop-b: #B9CCBF; --cs: light;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--ink);color:var(--text);font-family:var(--sans);min-height:100dvh;-webkit-font-smoothing:antialiased}
-input,button{font-family:inherit}
-::selection{background:rgba(224,105,47,.35)}
+/* tema escuro */
+html[data-tema="dark"] {
+  --bg:#0B1713; --white:#12241E; --surface:#183029; --border:#25433A;
+  --text:#E7F2ED; --text2:#A8C3B8; --text3:#7B968C;
+  --verde:#17906F; --verde-esc:#0E6B54; --verde-cl:rgba(30,158,124,.16); --menta:rgba(30,158,124,.09);
+  --laranja-cl:rgba(242,138,46,.16); --ouro-cl:rgba(245,184,61,.16); --vermelho-cl:rgba(210,16,52,.2); --roxo-cl:rgba(122,91,201,.22);
+  --ocre:#F2C45B; --vermelho:#FF7A93;
+  --shadow-md:0 6px 20px rgba(0,0,0,.35); --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --hero-a:rgba(11,23,19,.94); --hero-b:rgba(11,23,19,0); --h1c:#E7F2ED; --drop-b:#35574C; --cs:dark;
+}
 
-/* ═══════════════ LOGIN GATE ═══════════════ */
-#gate{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
-#gate::before{content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50%);width:900px;height:600px;
-  background:radial-gradient(ellipse, rgba(224,105,47,.12) 0%, transparent 65%);pointer-events:none}
-.gate-card{position:relative;width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:34px 30px}
-.gate-mark{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--terra),#B94F1F);
-  display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:0 6px 20px rgba(224,105,47,.35)}
-.gate-mark svg{width:22px;height:22px}
-.gate-title{font-family:var(--serif);font-size:24px;font-weight:600;margin-bottom:4px}
-.gate-sub{font-size:13px;color:var(--text3);font-family:var(--mono);margin-bottom:26px}
-.gate-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-.gate-field label{font-size:12px;color:var(--text2);font-weight:500}
-.gate-field input{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;color:var(--text);
-  padding:13px 14px;font-size:14px;outline:none;transition:border-color .15s}
-.gate-field input:focus{border-color:var(--terra)}
-.gate-btn{width:100%;margin-top:6px;background:linear-gradient(135deg,var(--terra),#C85826);color:#fff;border:none;
-  padding:14px;border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;transition:transform .15s}
-.gate-btn:hover:not(:disabled){transform:translateY(-1px)}
-.gate-btn:disabled{opacity:.5;cursor:not-allowed}
-.gate-erro{color:var(--red);font-size:12.5px;min-height:16px;margin-top:10px}
-.gate-foot{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;color:var(--text3);text-align:center;font-family:var(--mono)}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 16px; }
+html { color-scheme: light; }
+html[data-tema="dark"] { color-scheme: dark; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100dvh; -webkit-font-smoothing: antialiased; }
+button, input { font-family: inherit; }
+svg { display: block; }
+::selection { background: rgba(245,184,61,.5); }
+.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-/* ═══════════════ APP ═══════════════ */
-#app{display:none;min-height:100dvh}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(10,18,32,.92);backdrop-filter:blur(10px);z-index:20}
-.tb-brand{display:flex;align-items:center;gap:10px}
-.tb-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--terra),#B94F1F);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.tb-mark svg{width:16px;height:16px}
-.tb-name{font-family:var(--serif);font-size:16px;font-weight:600}
-.tb-right{display:flex;align-items:center;gap:14px}
-.tb-empresa{font-family:var(--mono);font-size:11.5px;color:var(--text2)}
-.tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--panel2);border:1px solid var(--line2);
-  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--terra-lt);cursor:pointer}
+/* faixa de capulana */
+.capulana {
+  height: 24px;
+  background-color: #0A4A3C;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2756%27 height=%2728%27 viewBox=%270 0 56 28%27%3E%3Crect width=%2756%27 height=%2728%27 fill=%27%230A4A3C%27/%3E%3Cpath d=%27M0 14 L14 0 L28 14 L14 28Z M28 14 L42 0 L56 14 L42 28Z%27 fill=%27none%27 stroke=%27%232F9E88%27 stroke-width=%271.2%27/%3E%3Cpath d=%27M14 3 L25 14 L14 25 L3 14Z%27 fill=%27%23F28A2E%27/%3E%3Cpath d=%27M14 7.5 L20.5 14 L14 20.5 L7.5 14Z%27 fill=%27none%27 stroke=%27%23F5B83D%27 stroke-width=%271.7%27/%3E%3Ccircle cx=%2714%27 cy=%2714%27 r=%272.4%27 fill=%27%23073A2F%27/%3E%3Cpath d=%27M42 5 L51 14 L42 23 L33 14Z%27 fill=%27%23D9531E%27/%3E%3Cpath d=%27M42 9.5 L46.5 14 L42 18.5 L37.5 14Z%27 fill=%27%23F5B83D%27/%3E%3Ccircle cx=%2742%27 cy=%2714%27 r=%271.5%27 fill=%27%23073A2F%27/%3E%3Cpath d=%27M28 0 l3 3 l-3 3 l-3 -3z M28 22 l3 3 l-3 3 l-3 -3z M0 0 l3 3 l-3 3z M56 0 l-3 3 l3 3z%27 fill=%27%23F5B83D%27/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+}
 
-.wrap{max-width:960px;margin:0 auto;padding:28px 22px 60px}
+/* estrutura */
+.shell { display: grid; grid-template-columns: var(--sbw) minmax(0, 1fr); min-height: 100dvh; }
+.side {
+  position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, var(--side) 0%, var(--side-2) 100%); color: #D9EBE3;
+}
+.side-brand { display: flex; align-items: center; gap: 10px; padding: 22px 18px 18px; }
+.emblema { width: 40px; height: 40px; flex-shrink: 0; }
+.side-name { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -.01em; }
+.side-sub  { font-size: 11px; color: #9FC4B6; margin-top: 1px; }
+.nav { padding: 6px 12px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; min-height: 0; flex: 0 1 auto; }
+@media (max-height: 800px) { .baobab { display: none; } .tag { margin-bottom: 14px; } }
+.nav button {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px;
+  border: 0; border-radius: 10px; background: none; color: #CFE5DB; font-size: 14px; font-weight: 500;
+  text-align: left; cursor: pointer; transition: background .15s;
+}
+.nav button:hover { background: rgba(255,255,255,.07); }
+.nav button.on { background: var(--side-act); color: #fff; box-shadow: inset 3px 0 0 var(--ouro); }
+.side-foot { margin-top: auto; padding: 0 18px; position: relative; }
+.tag { font-size: 13px; font-style: italic; color: #B8D6CA; line-height: 1.45; margin: 0 0 8px; }
+.baobab { width: 100%; height: 120px; opacity: .95; margin-bottom: -2px; }
 
-.hello{margin-bottom:26px}
-.hello-eyebrow{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
-.hello-title{font-family:var(--serif);font-size:28px;font-weight:600;letter-spacing:-.5px}
+.main { min-width: 0; display: flex; flex-direction: column; min-height: 100dvh; }
+.top { display: flex; justify-content: flex-end; align-items: center; gap: 14px; padding: 14px 28px 0; }
+.tema-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--white); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text2); cursor: pointer; }
+.tema-btn:hover { border-color: var(--verde); color: var(--verde); }
+.tema-btn .lua { display: none; }
+html[data-tema="dark"] .tema-btn .sol { display: none; }
+html[data-tema="dark"] .tema-btn .lua { display: block; }
+.usr { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; }
+.avatar { border: 0; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; background: var(--verde); color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.usr-nome { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.link-sair { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 11px; color: var(--text2); font-size: 12px; cursor: pointer; }
+.link-sair:hover { border-color: var(--verde); color: var(--verde); }
 
-/* KPIs */
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:32px}
-@media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
-.kpi-val{font-family:var(--serif);font-size:24px;font-weight:600}
-.kpi-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.04em}
+.content { flex: 1; padding: 12px 28px 28px; max-width: 1100px; width: 100%; }
+.view { display: none; animation: subir .25s ease; }
+.view.on { display: block; }
+@keyframes subir { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.capulana-main { margin-top: auto; }
 
-/* Section head */
-.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
-.sec-title{font-family:var(--serif);font-size:19px;font-weight:600}
-.sec-link{font-family:var(--mono);font-size:11.5px;color:var(--text3);text-decoration:none;cursor:pointer}
-.sec-link:hover{color:var(--terra-lt)}
+/* início: banner */
+.hero { position: relative; border-radius: var(--r3); overflow: hidden; height: 168px; box-shadow: var(--shadow-md); }
+.hero svg.cena { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-txt { position: relative; z-index: 1; padding: 26px 28px; max-width: 52%; height: 100%; background: linear-gradient(90deg, var(--hero-a) 70%, var(--hero-b)); }
+.hero-txt h1 { margin: 0 0 6px; font-size: 26px; font-weight: 700; color: var(--h1c); letter-spacing: -.01em; }
+.hero-txt p  { margin: 0; font-size: 14px; color: var(--text2); line-height: 1.45; max-width: 340px; }
 
-/* Módulos */
-.mod-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:36px}
-@media(max-width:760px){.mod-row{grid-template-columns:1fr}}
-.mod-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;cursor:pointer;
-  transition:border-color .2s,transform .2s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:12px;position:relative}
-.mod-card:hover{border-color:var(--line2);transform:translateY(-2px)}
-.mod-card.locked{opacity:.5;cursor:not-allowed}
-.mod-card.locked:hover{transform:none}
-.mod-top2{display:flex;align-items:flex-start;justify-content:space-between}
-.mod-icon2{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-  background:var(--mod-bg,rgba(224,105,47,.12));border:1px solid var(--mod-border,rgba(224,105,47,.3))}
-.mod-icon2 svg{width:19px;height:19px;stroke:var(--mod-accent,var(--terra-lt))}
-.lock-badge{font-family:var(--mono);font-size:9px;color:var(--text3);border:1px solid var(--line2);padding:3px 8px;border-radius:99px}
-.mod-name2{font-size:15px;font-weight:600}
-.mod-tag2{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin-top:2px}
-.mod-arrow{margin-top:auto;display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--mod-accent,var(--terra-lt))}
-.mod-arrow svg{width:13px;height:13px;transition:transform .15s}
-.mod-card:hover .mod-arrow svg{transform:translateX(3px)}
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: -26px 14px 0; position: relative; z-index: 2; }
+.kcard { background: var(--white); border: 1px solid var(--border); border-radius: var(--r2); padding: 14px; display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow-md); }
+.kico { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kico.v { background: var(--verde-cl); color: var(--verde); }
+.kico.l { background: var(--laranja-cl); color: var(--laranja); }
+.kico.o { background: var(--ouro-cl); color: var(--ocre); }
+.kico.r { background: var(--roxo-cl); color: var(--roxo); }
+.klbl { font-size: 12px; color: var(--text2); }
+.kval { font-size: 24px; font-weight: 700; line-height: 1.15; }
+.ksub { font-size: 11px; color: var(--text3); }
 
-/* Histórico */
-.hist-list{display:flex;flex-direction:column;gap:8px;margin-bottom:36px}
-.hist-item{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px}
-.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.hist-dot.concluido{background:var(--teal)}
-.hist-dot.erro{background:var(--red)}
-.hist-dot.pendente{background:var(--amber)}
-.hist-main{flex:1;min-width:0}
-.hist-resumo{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hist-meta{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin-top:2px}
-.hist-link{font-family:var(--mono);font-size:11px;color:var(--terra-lt);text-decoration:none;white-space:nowrap}
-.hist-empty{text-align:center;padding:34px 20px;color:var(--text3);font-size:13px;background:var(--panel);border:1px dashed var(--line2);border-radius:14px;line-height:1.6}
+.grid2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; margin-top: 18px; }
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r3); box-shadow: var(--shadow-sm); padding: 18px; }
+.card h2 { margin: 0 0 4px; font-size: 16px; font-weight: 700; }
+.card .sub { margin: 0 0 14px; font-size: 12.5px; color: var(--text2); }
+.card-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.card-head h2 { margin: 0; }
+.ver { background: none; border: 0; color: var(--verde); font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 0; }
+.ver:hover { text-decoration: underline; }
 
-/* Configurações */
-.cfg-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
-.cfg-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
-.cfg-row:last-of-type{border-bottom:none}
-.cfg-lbl{font-size:13px;color:var(--text2)}
-.cfg-val{font-family:var(--mono);font-size:12.5px;color:var(--text)}
-.cfg-form{display:flex;flex-direction:column;gap:10px;margin-top:16px}
-.cfg-form input{background:var(--panel2);border:1px solid var(--line2);border-radius:9px;color:var(--text);padding:11px 13px;font-size:13px;outline:none}
-.cfg-form input:focus{border-color:var(--terra)}
-.cfg-btn{align-self:flex-start;background:var(--panel2);border:1px solid var(--line2);color:var(--text);
-  padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
-.cfg-btn:hover{border-color:var(--terra);color:var(--terra-lt)}
-.cfg-msg{font-size:12px;min-height:16px;margin-top:4px}
-.cfg-msg.ok{color:var(--teal)}
-.cfg-msg.err{color:var(--red)}
-.cfg-logout{color:var(--red);font-size:12.5px;cursor:pointer;font-family:var(--mono);margin-top:18px;display:inline-block}
+/* zona de carregamento */
+.drop {
+  padding: 26px 16px; text-align: center; cursor: pointer; border: 1.5px dashed var(--drop-b);
+  border-radius: var(--r2); background: var(--menta); transition: border-color .15s, background .15s;
+}
+.drop:hover, .drop.over { border-color: var(--verde); background: var(--verde-cl); }
+.drop-ic { width: 46px; height: 46px; margin: 0 auto 10px; border-radius: 50%; background: var(--white); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--verde); }
+.drop-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.drop-hint  { font-size: 12.5px; color: var(--text2); margin-bottom: 12px; }
+.drop-chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.chip { font-family: var(--mono); font-size: 11px; padding: 3px 9px; border-radius: 6px; background: var(--white); color: var(--text2); border: 1px solid var(--border); }
+#fi { display: none; }
+
+.flist { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.fitem { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--border); }
+.fitem-icon { width: 34px; height: 34px; border-radius: 9px; background: var(--white); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.fitem-icon svg { width: 17px; height: 17px; }
+.fitem-icon svg path, .fitem-icon svg polyline { stroke: var(--verde) !important; }
+.fitem-body { flex: 1; min-width: 0; }
+.fitem-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fitem-meta { font-size: 11.5px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+.fitem-rm { background: none; border: 0; cursor: pointer; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text3); }
+.fitem-rm:hover { background: var(--vermelho-cl); color: var(--vermelho); }
+.fitem-rm svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+/* botões */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 22px; border: 0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s, transform .1s; }
+.btn-p { background: var(--verde); color: #fff; box-shadow: 0 3px 0 var(--verde-esc); }
+.btn-p:hover:not(:disabled) { background: var(--verde-esc); }
+.btn-p:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--verde-esc); }
+.btn-p:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+.btn-s { background: var(--white); color: var(--text); border: 1.5px solid var(--border); }
+.btn-s:hover { border-color: var(--verde); color: var(--verde); }
+.btn-full { width: 100%; margin-top: 14px; }
+.spin { animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* lista de reconciliações */
+.lista { display: flex; flex-direction: column; }
+.li { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.li:last-child { border-bottom: 0; }
+.li-ic { width: 38px; height: 38px; border-radius: 50%; background: var(--verde-cl); color: var(--verde); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.li-body { flex: 1; min-width: 0; }
+.li-t { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-m { font-size: 12px; color: var(--text3); margin-top: 1px; }
+.badge { font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 99px; background: var(--verde-cl); color: var(--verde); white-space: nowrap; }
+.badge.av { background: var(--ouro-cl); color: var(--ocre); }
+.badge.er { background: var(--vermelho-cl); color: var(--vermelho); }
+.li a.abrir { font-size: 12px; color: var(--verde); font-weight: 600; text-decoration: none; margin-left: 6px; }
+.vazio { padding: 22px 8px; text-align: center; font-size: 13px; color: var(--text3); }
+.dica { margin-top: 16px; display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--verde-cl); border: 1px solid var(--border); border-radius: var(--r2); font-size: 12.5px; color: var(--text2); }
+.dica .ic { color: var(--ocre); }
+
+/* nova reconciliação: passos */
+.page-h { display: flex; align-items: center; gap: 14px; margin: 6px 0 16px; }
+.page-h .ph-ic { width: 46px; height: 46px; border-radius: 14px; background: var(--verde); color: #fff; display: flex; align-items: center; justify-content: center; }
+.page-h h1 { margin: 0; font-size: 22px; font-weight: 700; }
+.page-h p { margin: 2px 0 0; font-size: 13px; color: var(--text2); }
+.stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.st { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: var(--white); border: 1.5px solid var(--border); font-size: 13px; font-weight: 500; color: var(--text3); }
+.st b { width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; flex-shrink: 0; }
+.st.on { border-color: var(--verde); color: var(--h1c); background: var(--verde-cl); }
+.st.on b { background: var(--verde); color: #fff; border-color: var(--verde); }
+.st.ok { color: var(--text2); }
+.st.ok b { background: var(--verde); color: #fff; border-color: var(--verde); }
+.nr-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 16px; align-items: start; }
+.painel { display: none; }
+.painel.on { display: block; }
+.acoes { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
+.dicas-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.dicas-lista li { display: flex; gap: 10px; font-size: 13px; color: var(--text2); line-height: 1.4; }
+.dicas-lista .ic { color: var(--verde); margin-top: 1px; }
+.campos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 13px; font-weight: 500; color: var(--text2); }
+.field input { width: 100%; height: 46px; padding: 0 14px; background: var(--white); border: 1.5px solid var(--border); border-radius: var(--r); color: var(--text); font-size: 14px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.field input:focus { border-color: var(--verde); box-shadow: 0 0 0 3px rgba(14,107,84,.18); }
+.field input::placeholder { color: var(--text3); }
+.field input[type="month"], .field input[type="password"] { color-scheme: var(--cs); }
+
+/* progresso */
+.steps { display: flex; margin-bottom: 18px; }
+.step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
+.step + .step::before { content: ''; position: absolute; top: 15px; right: 50%; left: -50%; height: 2px; background: var(--border); transition: background .3s; }
+.step.done + .step::before, .step.active + .step::before { background: var(--verde); }
+.sdot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; transition: all .3s; }
+.sdot svg { width: 15px; height: 15px; fill: none; stroke: var(--text3); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.step.active .sdot { border-color: var(--verde); background: var(--verde-cl); }
+.step.active .sdot svg { stroke: var(--verde); }
+.step.done .sdot { border-color: var(--verde); background: var(--verde); }
+.step.done .sdot svg { stroke: #fff; }
+.slbl { font-size: 12px; font-weight: 500; color: var(--text3); }
+.step.active .slbl { color: var(--verde); }
+.step.done .slbl { color: var(--text2); }
+.pbar-info { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text2); margin-bottom: 8px; }
+.pbar-info span:last-child { font-family: var(--mono); color: var(--text); }
+.pbar { height: 8px; background: var(--surface); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+.pfill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--verde), var(--ouro)); border-radius: 99px; transition: width .5s ease; }
+details.detalhes { margin-top: 14px; }
+details.detalhes summary { font-size: 12px; color: var(--text3); cursor: pointer; }
+.logbox { margin-top: 10px; background: var(--preto); border-radius: var(--r); padding: 12px 14px; max-height: 120px; overflow-y: auto; font-family: var(--mono); font-size: 11.5px; color: #D5DDDA; }
+.log-line { padding: 1.5px 0; }
+.log-ok { color: #6EE7B7; } .log-err { color: #FDA4AF; } .log-warn { color: var(--ouro); }
+
+/* resultados */
+.rk { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+.rcard { border-radius: var(--r2); padding: 16px; color: #fff; display: flex; flex-direction: column; gap: 6px; min-height: 108px; }
+.rcard.v { background: linear-gradient(135deg, #0E6B54, #0A4A3C); }
+.rcard.l { background: linear-gradient(135deg, #F7994A, #E9722A); }
+.rcard.o { background: linear-gradient(135deg, #F8CB62, #F2A93B); color: #3B2A00; }
+.rcard.r { background: linear-gradient(135deg, #8E71D6, #6A4FB8); }
+.rlbl { font-size: 12.5px; opacity: .92; }
+.rval { font-size: 24px; font-weight: 700; line-height: 1.1; }
+.rsub { font-size: 12px; opacity: .88; margin-top: auto; }
+.res-grid { display: grid; grid-template-columns: 1.1fr 1fr 1.1fr; gap: 14px; }
+.donut-wrap { display: flex; align-items: center; gap: 16px; }
+.donut { width: 130px; height: 130px; flex-shrink: 0; }
+.leg { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; }
+.leg li { display: flex; align-items: center; gap: 8px; }
+.leg i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.leg b { margin-left: auto; padding-left: 12px; font-weight: 600; }
+.det { list-style: none; margin: 0; padding: 0; }
+.det li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); }
+.det li:last-child { border-bottom: 0; }
+.det b { color: var(--text); font-weight: 600; }
+.ins p { margin: 0 0 10px; font-size: 13px; color: var(--text2); line-height: 1.5; }
+.ins ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text2); line-height: 1.5; }
+.concl { margin-top: 14px; display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--verde-cl); border: 1px solid var(--border); border-radius: var(--r2); flex-wrap: wrap; }
+.concl .ok-ic { width: 42px; height: 42px; border-radius: 50%; background: var(--verde); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.concl .tx { flex: 1; min-width: 180px; }
+.concl .tx b { display: block; font-size: 15px; color: var(--h1c); }
+.concl .tx span { font-size: 12.5px; color: var(--text2); }
+.dl-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.dl-row .btn { height: 42px; padding: 0 16px; font-size: 13px; }
+
+/* relatórios, perfil, configurações */
+.toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.toolbar input, .toolbar select { height: 42px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: var(--r); background: var(--white); color: var(--text); font-size: 13.5px; outline: none; }
+.toolbar input { flex: 1; min-width: 180px; }
+.toolbar input:focus, .toolbar select:focus { border-color: var(--verde); }
+.rel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.rel { background: var(--white); border: 1px solid var(--border); border-radius: var(--r2); padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-sm); }
+.rel-t { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.rel-n { font-size: 14.5px; font-weight: 600; }
+.rel-m { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.rel-st { display: flex; gap: 6px; flex-wrap: wrap; }
+.mini { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
+.mini.v { background: var(--verde-cl); color: var(--verde); } .mini.l { background: var(--laranja-cl); color: var(--laranja); } .mini.o { background: var(--ouro-cl); color: var(--ocre); }
+.rel .btn { height: 38px; font-size: 13px; padding: 0 14px; }
+.perfil-top { display: flex; align-items: center; gap: 16px; padding: 20px; margin-bottom: 14px; }
+.avatar-g { width: 64px; height: 64px; border-radius: 50%; background: var(--verde); color: #fff; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px var(--verde-cl); flex-shrink: 0; }
+.perfil-top h2 { margin: 0; font-size: 20px; }
+.perfil-top .sub { margin: 6px 0 0; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.mods { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.mod { font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 99px; background: var(--verde-cl); color: var(--verde); }
+.mod.off { background: var(--surface); color: var(--text3); font-weight: 500; }
+.seg { display: inline-flex; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; }
+.seg button { border: 0; background: var(--white); color: var(--text2); padding: 10px 18px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.seg button + button { border-left: 1.5px solid var(--border); }
+.seg button.on { background: var(--verde); color: #fff; }
+.cfg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cfg-grid .card .field { margin-bottom: 10px; }
+.nota { font-size: 12px; color: var(--text3); margin-top: 8px; line-height: 1.45; }
+.ponto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--text3); }
+.ponto.ok { background: #2BB673; } .ponto.er { background: var(--vermelho); }
+.det b { text-align: right; overflow-wrap: anywhere; }
+@media (max-width: 960px) { .grid3, .cfg-grid { grid-template-columns: 1fr; } }
+
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--preto); color: #fff; border-radius: 99px; padding: 11px 22px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md); z-index: 999; transition: transform .28s ease; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast.ok { background: var(--verde); } .toast.warn { background: var(--ouro); color: var(--preto); } .toast.err { background: var(--vermelho); }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.bottomnav { display: none; }
+
+@media (max-width: 960px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); margin: -22px 8px 0; }
+  .grid2, .nr-grid, .res-grid { grid-template-columns: 1fr; }
+  .rk { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 820px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side { display: none; }
+  .top { padding: 12px 16px 0; }
+  .content { padding: 10px 16px 96px; }
+  .hero { height: 150px; }
+  .hero-txt { max-width: 78%; padding: 20px; }
+  .hero-txt h1 { font-size: 21px; }
+  .hero-txt p { font-size: 12.5px; }
+  .usr-nome { display: none; }
+  .stepper { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .st { flex-direction: column; text-align: center; padding: 8px 4px; font-size: 11px; gap: 4px; }
+  .campos { grid-template-columns: 1fr; }
+  .bottomnav { display: flex; overflow-x: auto; position: fixed; left: 0; right: 0; bottom: 0; background: var(--side); z-index: 50; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+  .bottomnav button { flex: 1 0 70px; background: none; border: 0; color: #B8D6CA; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; cursor: pointer; border-radius: 10px; }
+  .bottomnav button.on { color: #fff; background: var(--side-act); }
+  .capulana-main { margin-bottom: 64px; }
+}
+@media (max-width: 480px) { .rk { grid-template-columns: 1fr 1fr; } .rval { font-size: 20px; } .kval { font-size: 20px; } }
+body:not(.auth-ok) { visibility: hidden; }
+
+
+/* ===== paleta Fixer OS ===== */
+:root { --side:#1A202B;--side-2:#11151C;--side-act:#2C3545;--verde:#2B3648;--verde-esc:#161C27;--verde-cl:#E9ECF1;--menta:#F3F4F7;--bg:#F5F4F0;--white:#FFFFFF;--surface:#EEEDE8;--border:#E0DED6;--text:#181B22;--text2:#565B66;--text3:#8A8F9A;--h1c:#181B22;--drop-b:#C9C6BC;--hero-a:rgba(250,243,228,.95);--hero-b:rgba(250,243,228,0);--ok:#1F9D63;--ok-cl:#DDF3E8;--warn:#C98A00;--warn-cl:#FFF1CC;--emb-in:#2C3545;--foco:rgba(224,165,38,.30);--ouro:#E0A526; --err: var(--vermelho); --err-cl: var(--vermelho-cl); }
+html[data-tema="dark"] { --bg:#0C0F14;--white:#151A22;--surface:#1C2330;--border:#2B3445;--text:#ECEEF2;--text2:#AEB5C2;--text3:#7C8596;--verde:#3A4A66;--verde-esc:#2B3648;--verde-cl:rgba(224,165,38,.14);--menta:rgba(224,165,38,.07);--h1c:#ECEEF2;--drop-b:#3A465C;--hero-a:rgba(12,15,20,.94);--hero-b:rgba(12,15,20,0);--ok:#3CC283;--ok-cl:rgba(60,194,131,.16);--warn:#F2C45B;--warn-cl:rgba(242,196,91,.16);--foco:rgba(224,165,38,.35); }
+.capulana { background-color: #12161E; background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2756%27 height=%2728%27 viewBox=%270 0 56 28%27%3E%3Crect width=%2756%27 height=%2728%27 fill=%27%2312161E%27/%3E%3Cpath d=%27M0 14 L14 0 L28 14 L14 28Z M28 14 L42 0 L56 14 L42 28Z%27 fill=%27none%27 stroke=%27%235A6475%27 stroke-width=%271.2%27/%3E%3Cpath d=%27M14 3 L25 14 L14 25 L3 14Z%27 fill=%27%23E0A526%27/%3E%3Cpath d=%27M14 7.5 L20.5 14 L14 20.5 L7.5 14Z%27 fill=%27none%27 stroke=%27%23FFF3CF%27 stroke-width=%271.7%27/%3E%3Ccircle cx=%2714%27 cy=%2714%27 r=%272.4%27 fill=%27%230C0F14%27/%3E%3Cpath d=%27M42 5 L51 14 L42 23 L33 14Z%27 fill=%27%23D9531E%27/%3E%3Cpath d=%27M42 9.5 L46.5 14 L42 18.5 L37.5 14Z%27 fill=%27%23E0A526%27/%3E%3Ccircle cx=%2742%27 cy=%2714%27 r=%271.5%27 fill=%27%230C0F14%27/%3E%3Cpath d=%27M28 0 l3 3 l-3 3 l-3 -3z M28 22 l3 3 l-3 3 l-3 -3z M0 0 l3 3 l-3 3z M56 0 l-3 3 l3 3z%27 fill=%27%23FFF3CF%27/%3E%3C/svg%3E"); background-repeat: repeat-x; background-size: auto 100%; }
+.side { color: #D5D9E0; }
+.side-sub { color: #9AA2B0; }
+.nav button { color: #C8CDD7; }
+.nav button.on { color: #fff; }
+.tag { color: #9AA2B0; }
+.bottomnav button { color: #9AA2B0; }
+.field input:focus, .field select:focus, .field textarea:focus { box-shadow: 0 0 0 3px var(--foco); }
+.rcard.v { background: linear-gradient(135deg, var(--verde), var(--verde-esc)); }
+.rcard.l { background: linear-gradient(135deg, #4A5A78, #2B3648); }
+.rcard.o { background: linear-gradient(135deg, #F8CB62, #E0A526); color: #3B2A00; }
+.rcard.r { background: linear-gradient(135deg, #D9531E, #B83F12); }
+.pfill { background: linear-gradient(90deg, var(--verde), var(--ouro)); }
+.emb-in { fill: var(--emb-in); }
+.emb-out { fill: var(--ouro); }
+
+/* ===== Fixer OS (hub): componentes próprios ===== */
+.kico.mod-fiscal { background: rgba(29,95,166,.14); color: #1D5FA6; }
+.kico.mod-recon  { background: rgba(14,107,84,.14); color: #0E6B54; }
+.kico.mod-doc    { background: rgba(196,86,28,.14); color: #C4561C; }
+html[data-tema="dark"] .kico.mod-fiscal { color: #5BA3EA; }
+html[data-tema="dark"] .kico.mod-recon  { color: #3CC283; }
+html[data-tema="dark"] .kico.mod-doc    { color: #F0834A; }
+.rcard.er { background: linear-gradient(135deg, #E5566D, #C42A44); }
+.seg button { font-family: inherit; }
+.sec-h { display: flex; justify-content: space-between; align-items: baseline; margin: 22px 0 10px; }
+.sec-h h2 { margin: 0; font-size: 16px; font-weight: 700; }
+
+/* módulos */
+.mod-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px; }
+.mod-card { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 18px; background: var(--white); border: 1px solid var(--border); border-top: 4px solid var(--mod-cor); border-radius: var(--r3); text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform .15s, box-shadow .15s; }
+.mod-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.mod-card.locked { opacity: .55; cursor: not-allowed; }
+.mod-card.locked:hover { transform: none; box-shadow: var(--shadow-sm); }
+.mod-ico { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--mod-cl); color: var(--mod-cor); }
+.mod-ico .ic { width: 22px; height: 22px; }
+.mod-nome { font-size: 15.5px; font-weight: 700; }
+.mod-tag { font-size: 12.5px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
+.mod-abrir { margin-top: auto; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--mod-cor); }
+.mod-abrir .ic { width: 15px; height: 15px; }
+.mod-card .mini { position: absolute; top: 14px; right: 14px; }
+.mod-row.grande .mod-card { min-height: 190px; }
+html[data-tema="dark"] .mod-card { --mod-cor: var(--mod-cor-esc, var(--mod-cor)); }
+
+/* entrada */
+#gate { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
+#gate .capulana { height: 22px; }
+.gate-centro { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: radial-gradient(60% 50% at 50% 0%, rgba(224,165,38,.14), transparent 70%); }
+.gate-card { width: 100%; max-width: 400px; background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; box-shadow: var(--shadow-md); }
+.gate-marca { width: 52px; height: 52px; margin-bottom: 14px; }
+.gate-marca .emblema { width: 52px; height: 52px; }
+.gate-title { margin: 0 0 4px; font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
+.gate-sub { margin: 0 0 22px; font-size: 13.5px; color: var(--text2); }
+.gate-erro { color: var(--vermelho); font-size: 12.5px; min-height: 18px; margin-top: 10px; }
+.gate-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--text3); text-align: center; }
+@media (max-width: 960px) { .mod-row { grid-template-columns: 1fr; } }
+
 </style>
 </head>
-<body>
+<body data-fixeros-modulo="hub">
 
-<!-- ═══════════════ GATE (login) ═══════════════ -->
+<!-- ═══════ ENTRADA (login) ═══════ -->
 <div id="gate">
-  <div class="gate-card">
-    <div class="gate-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4H4zM4 10h10v4H4zM4 16h16v4H4z"/></svg></div>
-    <div class="gate-title">Fixer OS Essencial</div>
-    <div class="gate-sub">Centro de comando · acesso à conta</div>
-
-    <div class="gate-field">
-      <label>Email</label>
-      <input id="in-email" type="email" placeholder="nome@escritorio.co.mz" autocomplete="username"/>
+  <div class="capulana" aria-hidden="true"></div>
+  <div class="gate-centro">
+    <div class="gate-card">
+      <div class="gate-marca"><svg class="emblema" viewBox="0 0 40 40" aria-hidden="true"><path class="emb-out" d="M20 2 L35 7 V19 C35 28 28.5 35 20 38 C11.5 35 5 28 5 19 V7Z"/><path class="emb-in" d="M20 5.5 L32 9.4 V19 C32 26.4 26.8 32.2 20 34.8 C13.2 32.2 8 26.4 8 19 V9.4Z"/><rect x="12" y="12" width="6" height="6" rx="1.5" fill="#fff"/><rect x="22" y="12" width="6" height="6" rx="1.5" fill="#fff"/><rect x="12" y="22" width="6" height="6" rx="1.5" fill="#fff"/><rect x="22" y="22" width="6" height="6" rx="1.5" fill="#F5B83D"/></svg></div>
+      <h1 class="gate-title">Fixer OS Essencial</h1>
+      <p class="gate-sub">Centro de comando dos seus módulos</p>
+      <div class="field"><label for="in-email">Email</label><input id="in-email" type="email" placeholder="nome@escritorio.co.mz" autocomplete="username"/></div>
+      <div class="field" style="margin-top:12px"><label for="in-pass">Palavra-passe</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+      <button class="btn btn-p btn-full" id="btn-login">Entrar</button>
+      <div class="gate-erro" id="gate-erro"></div>
+      <div class="gate-foot">Fixer Solutions Technologies · Maputo</div>
     </div>
-    <div class="gate-field">
-      <label>Password</label>
-      <input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
-    </div>
-    <button class="gate-btn" id="btn-login">Entrar</button>
-    <div class="gate-erro" id="gate-erro"></div>
-
-    <div class="gate-foot">Fixer Solutions Technologies · Maputo</div>
   </div>
 </div>
 
-<!-- ═══════════════ APP (dashboard) ═══════════════ -->
-<div id="app">
+<!-- ═══════ APLICAÇÃO ═══════ -->
+<div id="app" style="display:none">
+<div class="shell">
 
-  <div class="topbar">
-    <div class="tb-brand">
-      <div class="tb-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4H4zM4 10h10v4H4zM4 16h16v4H4z"/></svg></div>
-      <div class="tb-name">Fixer OS</div>
-    </div>
-    <div class="tb-right">
-      <span class="tb-empresa" id="tb-empresa">—</span>
-      <div class="tb-avatar" id="tb-avatar" title="Definições" onclick="irPara('config')">?</div>
-    </div>
-  </div>
-
-  <div class="wrap">
-
-    <!-- DASHBOARD -->
-    <div id="view-dashboard">
-      <div class="hello">
-        <div class="hello-eyebrow">Bom trabalho</div>
-        <div class="hello-title" id="hello-title">Olá.</div>
-      </div>
-
-      <div class="kpi-row">
-        <div class="kpi"><div class="kpi-val" id="kpi-total">0</div><div class="kpi-lbl">Operações (30 dias)</div></div>
-        <div class="kpi"><div class="kpi-val" id="kpi-fiscal" style="color:#4C8FE0">0</div><div class="kpi-lbl">FiscalMoz</div></div>
-        <div class="kpi"><div class="kpi-val" id="kpi-recon" style="color:#3DB9A0">0</div><div class="kpi-lbl">ReconBank</div></div>
-        <div class="kpi"><div class="kpi-val" id="kpi-docscan" style="color:#E0692F">0</div><div class="kpi-lbl">DocScan</div></div>
-      </div>
-
-      <div class="sec-head"><div class="sec-title">Módulos</div></div>
-      <div class="mod-row" id="mod-row"></div>
-
-      <div class="sec-head">
-        <div class="sec-title">Histórico recente</div>
-        <span class="sec-link" onclick="carregarHistorico()">Actualizar</span>
-      </div>
-      <div class="hist-list" id="hist-list">
-        <div class="hist-empty">A carregar histórico...</div>
+  <aside class="side">
+    <div class="side-brand">
+      <svg class="emblema" viewBox="0 0 40 40" aria-hidden="true"><path class="emb-out" d="M20 2 L35 7 V19 C35 28 28.5 35 20 38 C11.5 35 5 28 5 19 V7Z"/><path class="emb-in" d="M20 5.5 L32 9.4 V19 C32 26.4 26.8 32.2 20 34.8 C13.2 32.2 8 26.4 8 19 V9.4Z"/><rect x="12" y="12" width="6" height="6" rx="1.5" fill="#fff"/><rect x="22" y="12" width="6" height="6" rx="1.5" fill="#fff"/><rect x="12" y="22" width="6" height="6" rx="1.5" fill="#fff"/><rect x="22" y="22" width="6" height="6" rx="1.5" fill="#F5B83D"/></svg>
+      <div>
+        <div class="side-name">Fixer OS</div>
+        <div class="side-sub">Fixer Solutions</div>
       </div>
     </div>
+    <nav class="nav" aria-label="Menu principal">
+      <button class="on" data-view="inicio"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Início</button>
+      <button data-view="modulos"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Módulos</button>
+      <button data-view="historico"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
+      <button data-view="perfil"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Perfil</button>
+      <button data-view="config"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Configurações</button>
+    </nav>
+    <div class="side-foot">
+      <p class="tag">Todos os módulos,<br>um só lugar.</p>
+      <svg class="baobab" viewBox="0 0 220 120" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+  <path d="M0 112 Q60 104 110 108 T220 110 V120 H0Z" style="fill:var(--side-2)" opacity=".9"/>
+  <path d="M96 76 C104 70 116 70 124 76 L120 112 H100Z" fill="#000" opacity=".35"/>
+  <path d="M100 112 C104 96 102 84 98 72 C92 66 84 60 76 58 M120 112 C116 96 118 84 122 72 C128 66 136 60 144 58 M110 112 V70" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="10" stroke-linecap="round"/>
+  <g fill="#000" opacity=".3"><ellipse cx="72" cy="52" rx="22" ry="9"/><ellipse cx="102" cy="44" rx="24" ry="10"/><ellipse cx="134" cy="48" rx="24" ry="10"/><ellipse cx="156" cy="56" rx="18" ry="8"/><ellipse cx="88" cy="58" rx="20" ry="8"/></g>
+  <circle cx="178" cy="26" r="9" fill="#F5B83D" opacity=".85"/>
+</svg>
+      <div class="capulana" style="margin:0 -18px" aria-hidden="true"></div>
+    </div>
+  </aside>
 
-    <!-- CONFIGURAÇÕES -->
-    <div id="view-config" style="display:none">
-      <div class="sec-head"><div class="sec-title">Definições da conta</div><span class="sec-link" onclick="irPara('dashboard')">← Voltar</span></div>
+  <div class="main">
+    <header class="top">
+      <button class="tema-btn" onclick="alternarTema()" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro"><svg class="ic sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ic lua" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+      <div class="usr" id="user-box" style="display:none">
+        <button class="avatar" id="user-ini" onclick="irPara('perfil')" title="O meu perfil">ME</button>
+        <span class="usr-nome" id="user-nome"></span>
+        <button class="link-sair" onclick="sair()">Sair</button>
+      </div>
+    </header>
 
-      <div class="cfg-card">
-        <div class="cfg-row"><span class="cfg-lbl">Email</span><span class="cfg-val" id="cfg-email">—</span></div>
-        <div class="cfg-row"><span class="cfg-lbl">Empresa</span><span class="cfg-val" id="cfg-empresa">—</span></div>
-        <div class="cfg-row"><span class="cfg-lbl">Perfil</span><span class="cfg-val" id="cfg-role">—</span></div>
-        <div class="cfg-row"><span class="cfg-lbl">Módulos activos</span><span class="cfg-val" id="cfg-modulos">—</span></div>
+    <main class="content">
 
-        <div class="cfg-form">
-          <label style="font-size:12px;color:var(--text2)">Alterar password</label>
-          <input id="cfg-pass-nova" type="password" placeholder="Nova password (mín. 8 caracteres)"/>
-          <button class="cfg-btn" onclick="alterarPassword()">Guardar nova password</button>
-          <div class="cfg-msg" id="cfg-msg"></div>
+      <!-- INÍCIO -->
+      <section class="view on" id="v-inicio">
+        <div class="hero">
+          <svg class="cena" viewBox="0 0 800 168" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+<defs>
+  <linearGradient id="ceu" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FAF3E4"/><stop offset=".55" stop-color="#F3D9A6"/><stop offset="1" stop-color="#E0A526"/></linearGradient>
+  <linearGradient id="agua" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A4A66"/><stop offset="1" stop-color="#161C27"/></linearGradient>
+  <radialGradient id="brilho"><stop offset="0" stop-color="#FFF0BF" stop-opacity=".9"/><stop offset="1" stop-color="#FFF0BF" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="800" height="168" fill="url(#ceu)"/>
+<circle cx="600" cy="84" r="62" fill="url(#brilho)"/><circle cx="600" cy="84" r="24" fill="#FFE08A"/>
+<g fill="#1F2733" opacity=".95">
+  <rect x="404" y="86" width="22" height="52"/><rect x="430" y="64" width="26" height="74"/><rect x="460" y="96" width="20" height="42"/>
+  <rect x="708" y="80" width="24" height="58"/><rect x="736" y="56" width="28" height="82"/><rect x="768" y="88" width="32" height="50"/>
+  <rect x="744" y="46" width="4" height="12"/>
+</g>
+<g stroke="#161C27" fill="none" stroke-linecap="round">
+  <path d="M340 124 H800" stroke-width="5"/>
+  <path d="M510 124 V32 M676 124 V32" stroke-width="6"/>
+  <path d="M340 124 Q430 40 510 32 Q594 70 676 32 Q740 42 800 124" stroke-width="2.4"/>
+  <path d="M530 124 V66 M550 124 V52 M572 124 V50 M594 124 V58 M616 124 V58 M638 124 V50 M658 124 V54" stroke-width="1.2"/>
+</g>
+<rect y="124" width="800" height="44" fill="url(#agua)"/>
+<g stroke="#FFE9A8" stroke-width="1.6" opacity=".5" stroke-linecap="round"><path d="M560 134 h86"/><path d="M582 142 h50"/><path d="M542 150 h112"/></g>
+          </svg>
+          <div class="hero-txt">
+            <h1 id="saud">Olá, seja bem-vindo(a)!</h1>
+            <p>O centro de comando do seu gabinete de contabilidade.</p>
+          </div>
         </div>
 
-        <span class="cfg-logout" onclick="FixerAuth.logout()">Terminar sessão</span>
-      </div>
-    </div>
+        <div class="kpis">
+          <div class="kcard"><div class="kico v"><svg class="ic" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></div><div><div class="klbl">Operações</div><div class="kval" id="kpi-total">—</div><div class="ksub">últimos 30 dias</div></div></div>
+          <div class="kcard"><div class="kico mod-fiscal"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 18h4"/></svg></div><div><div class="klbl">FiscalMoz</div><div class="kval" id="kpi-fiscal">—</div><div class="ksub">declarações</div></div></div>
+          <div class="kcard"><div class="kico mod-recon"><svg class="ic" viewBox="0 0 24 24"><path d="M7 16H3m0 0 4-4M3 16l4 4M17 8h4m0 0-4-4m4 4-4 4"/></svg></div><div><div class="klbl">ReconBank</div><div class="kval" id="kpi-recon">—</div><div class="ksub">reconciliações</div></div></div>
+          <div class="kcard"><div class="kico mod-doc"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><div><div class="klbl">DocScan</div><div class="kval" id="kpi-docscan">—</div><div class="ksub">lotes</div></div></div>
+        </div>
 
+        <div class="sec-h"><h2>Os seus módulos</h2><button class="ver" onclick="irPara('modulos')">Ver detalhes →</button></div>
+        <div class="mod-row" id="mod-row-ini"></div>
+
+        <div class="card" style="margin-top:6px">
+          <div class="card-head"><h2>Actividade recente</h2><button class="ver" onclick="irPara('historico')">Ver tudo →</button></div>
+          <div class="lista" id="ult-lista"><div class="vazio">A carregar...</div></div>
+        </div>
+      </section>
+
+      <!-- MÓDULOS -->
+      <section class="view" id="v-modulos">
+        <div class="page-h">
+          <div class="ph-ic"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+          <div><h1>Módulos</h1><p>Abra um módulo sem voltar a iniciar sessão.</p></div>
+        </div>
+        <div class="mod-row grande" id="mod-row"></div>
+      </section>
+
+      <!-- HISTÓRICO -->
+      <section class="view" id="v-historico">
+        <div class="page-h">
+          <div class="ph-ic"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><h1>Histórico</h1><p>Toda a actividade da sua empresa, em todos os módulos.</p></div>
+        </div>
+        <div class="toolbar">
+          <div class="seg" id="seg-filtro">
+            <button class="on" data-f="" onclick="filtrarHub('')">Todos</button>
+            <button data-f="fiscal" onclick="filtrarHub('fiscal')">FiscalMoz</button>
+            <button data-f="reconbank" onclick="filtrarHub('reconbank')">ReconBank</button>
+            <button data-f="docscan" onclick="filtrarHub('docscan')">DocScan</button>
+          </div>
+        </div>
+        <div class="card"><div class="lista" id="hist-lista"><div class="vazio">A carregar...</div></div></div>
+      </section>
+
+      <!-- PERFIL -->
+      <section class="view" id="v-perfil">
+        <div class="card perfil-top">
+          <div class="avatar-g" id="pf-av">ME</div>
+          <div style="flex:1;min-width:0">
+            <h2 id="pf-nome">—</h2>
+            <p class="sub"><span class="badge" id="pf-estado">Conta activa</span> &nbsp;<span id="pf-cid" class="mini v">—</span></p>
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="card">
+            <h2>Dados da conta</h2>
+            <ul class="det" style="margin-top:8px">
+              <li>Empresa <b id="pf-emp">—</b></li>
+              <li>Email <b id="pf-email">—</b></li>
+              <li>Função <b id="pf-role">—</b></li>
+              <li>Código do cliente <b id="pf-cid2">—</b></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h2>Módulos contratados</h2>
+            <p class="sub">Os módulos a que a sua conta tem acesso.</p>
+            <div class="mods" id="pf-mods"></div>
+          </div>
+          <div class="card">
+            <h2>Estado e utilização</h2>
+            <ul class="det" style="margin-top:8px">
+              <li>Sessão válida até <b id="pf-sessao">—</b></li>
+              <li>Operações (total) <b id="pf-total">—</b></li>
+              <li>Este mês <b id="pf-mes">—</b></li>
+              <li>Última operação <b id="pf-ultima">—</b></li>
+              <li>Serviço <b id="pf-svc"><span class="ponto"></span>a verificar...</b></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONFIGURAÇÕES -->
+      <section class="view" id="v-config">
+        <div class="page-h">
+          <div class="ph-ic"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></div>
+          <div><h1>Configurações</h1><p>Preferências da aplicação e segurança da conta.</p></div>
+        </div>
+        <div class="cfg-grid">
+          <div class="card">
+            <h2>Aparência</h2>
+            <p class="sub">Escolha o tema da aplicação. Vale para todos os módulos Fixer OS neste dispositivo.</p>
+            <div class="seg" id="seg-tema">
+              <button data-tema="light" onclick="definirTema('light')">Claro</button>
+              <button data-tema="dark" onclick="definirTema('dark')">Escuro</button>
+              <button data-tema="auto" onclick="definirTema('auto')">Automático</button>
+            </div>
+            <p class="nota">No modo automático segue o tema do seu dispositivo.</p>
+          </div>
+          <div class="card">
+            <h2>Palavra-passe</h2>
+            <p class="sub">Mínimo de 8 caracteres.</p>
+            <div class="field"><label for="pw1">Nova palavra-passe</label><input id="pw1" type="password" autocomplete="new-password"/></div>
+            <div class="field"><label for="pw2">Repetir palavra-passe</label><input id="pw2" type="password" autocomplete="new-password"/></div>
+            <button class="btn btn-p" id="btn-pw" onclick="alterarPassword()">Alterar palavra-passe</button>
+          </div>
+          
+          <div class="card">
+            <h2>Sobre</h2>
+            <ul class="det" style="margin-top:8px">
+              <li>Aplicação <b>Fixer OS</b></li>
+              <li>Desenvolvido por <b>Fixer Solutions</b></li>
+              <li>Servidor <b id="sb-ver">—</b></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    </main>
+    <div class="capulana capulana-main" aria-hidden="true"></div>
   </div>
 </div>
 
+<nav class="bottomnav" aria-label="Menu">
+  <button class="on" data-view="inicio"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Início</button>
+  <button data-view="modulos"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Módulos</button>
+  <button data-view="historico"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
+  <button data-view="perfil"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Perfil</button>
+  <button data-view="config"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Config.</button>
+</nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
 <script>
-/* ================================================================
-   FixerAuth — versão embutida (hub), com suporte a SSO por
-   querystring quando abre um módulo externo.
-   ================================================================ */
+// ═══ Fixer OS · núcleo comum dos módulos (tema, navegação, histórico, perfil, configurações) ═══
+// Os marcadores __X__ são substituídos pelo gerador (build_front.py).
+const MODULO_ID   = 'hub';
+const MODULO_NOME = 'Fixer OS';
+const GAS_URL     = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
+const AUTH_URL    = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
+const MODULOS_CONHECIDOS = [['reconbank', 'ReconBank'], ['docscan', 'DocScan'], ['fiscal', 'FiscalMoz']];
+const MESES_NOME = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+const $ = (id) => document.getElementById(id);
+function esc(t) {
+  return String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function iniciais(nome) {
+  const p = String(nome || '').replace(/[^\p{L}\p{N} ]/gu, '').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return 'ME';
+  return (p[0][0] + (p[1] ? p[1][0] : (p[0][1] || ''))).toUpperCase();
+}
+function fmtMZN(n) {
+  return Number(n || 0).toLocaleString(['pt-MZ', 'pt-PT'], { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MZN';
+}
+function fmtData(d) {
+  if (!(d instanceof Date) || isNaN(d)) return '';
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+}
+function rotuloPeriodo(p) {
+  const m = String(p || '').match(/^(\d{4})-(\d{2})$/);
+  return m ? MESES_NOME[Number(m[2]) - 1] + ' de ' + m[1] : String(p || '');
+}
+function toast(msg, type = 'ok') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── TEMA CLARO / ESCURO (preferência partilhada por todos os módulos Fixer OS) ──
+const TEMA_KEY = 'fixeros_tema';
+function temaPref() { try { return localStorage.getItem(TEMA_KEY) || 'auto'; } catch (e) { return 'auto'; } }
+function aplicarTema() {
+  const t = temaPref();
+  const escuro = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-tema', escuro ? 'dark' : 'light');
+  document.querySelectorAll('#seg-tema button').forEach((b) => b.classList.toggle('on', b.dataset.tema === t));
+}
+function definirTema(t) { try { localStorage.setItem(TEMA_KEY, t); } catch (e) {} aplicarTema(); }
+function alternarTema() { definirTema(document.documentElement.getAttribute('data-tema') === 'dark' ? 'light' : 'dark'); }
+if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (temaPref() === 'auto') aplicarTema(); });
+aplicarTema();
+
+// ── NAVEGAÇÃO ──
+function irPara(v) {
+  document.querySelectorAll('.view').forEach((e) => e.classList.toggle('on', e.id === 'v-' + v));
+  document.querySelectorAll('[data-view]').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
+  if (['inicio', 'historico', 'perfil'].includes(v)) carregarHistorico(false);
+  if (v === 'perfil') carregarPerfil();
+  if (v === 'config') prepararConfig();
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => irPara(b.dataset.view)));
+function sair() { FixerAuth.logout(); }
+
+// ── ARRANQUE ──
+window.addEventListener('load', () => {
+  FixerAuth.exigirLogin(MODULO_ID).then(() => {
+    document.body.classList.add('auth-ok');
+    if ('serviceWorker' in navigator && typeof SW_FICHEIRO !== 'undefined') navigator.serviceWorker.register(SW_FICHEIRO).catch(() => {});
+    const u = FixerAuth.getUser();
+    if (u) {
+      $('user-nome').textContent = u.empresa || u.email || '';
+      $('user-ini').textContent = iniciais(u.empresa || u.email);
+      $('user-box').style.display = 'flex';
+      if ($('saud') && u.empresa) $('saud').textContent = 'Olá, ' + u.empresa + '!';
+    }
+    carregarHistorico(true);
+    if (typeof aoIniciar === 'function') aoIniciar();
+  }).catch(() => { /* FixerAuth já mostrou o ecrã de login */ });
+});
+
+// ── HISTÓRICO (aba Fixer_Operacoes da Auth, filtrada por módulo) ──
+let historico = null;
+let histErro = '';
+let histTs = 0;
+
+function lerOperacaoBase(o) {
+  const base = { modulo: o.modulo, utilizador: o.utilizador || '', bruto: String(o.resumo || ''), titulo: String(o.resumo || ''), data: new Date(o.timestamp), link: o.linkPrincipal || '', estado: o.estado || 'concluido' };
+  return typeof lerOperacaoMod === 'function' ? Object.assign(base, lerOperacaoMod(base)) : base;
+}
+async function carregarHistorico(forcar) {
+  if (!forcar && historico && Date.now() - histTs < 60000) { renderHistorico(); return; }
+  try {
+    const r = await fetch(AUTH_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accao: 'listarOperacoes', token: FixerAuth.getToken(), limite: 200 }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.erro || 'Erro ao ler o histórico');
+    historico = (j.operacoes || []).filter((o) => MODULO_ID === 'hub' || o.modulo === MODULO_ID).map(lerOperacaoBase);
+    histErro = '';
+    histTs = Date.now();
+  } catch (e) {
+    historico = null;
+    histErro = e.message;
+  }
+  renderHistorico();
+}
+function etiqueta(estado) {
+  if (estado === 'concluido') return '<span class="badge">Concluída</span>';
+  if (estado === 'a_confirmar') return '<span class="badge av">A confirmar</span>';
+  if (estado === 'concluido_com_erros') return '<span class="badge er">Com erros</span>';
+  return '<span class="badge av">' + esc(estado) + '</span>';
+}
+function linhaOp(op) {
+  const nome = (typeof nomeOp === 'function' ? nomeOp(op) : op.titulo) || 'Operação';
+  const meta = [(typeof metaOp === 'function' ? metaOp(op) : ''), fmtData(op.data)].filter(Boolean).join(' · ');
+  const abrir = op.link ? '<a class="abrir" href="' + esc(op.link) + '" target="_blank" rel="noopener noreferrer">Abrir</a>' : '';
+  return '<div class="li"><div class="li-ic">' + esc(iniciais(nome)) + '</div><div class="li-body"><div class="li-t">' + esc(nome) +
+    '</div><div class="li-m">' + esc(meta) + '</div></div>' + etiqueta(op.estado) + abrir + '</div>';
+}
+function renderHistorico() {
+  const vazio = (t) => '<div class="vazio">' + t + '</div>';
+  const falha = historico === null;
+  const ops = (historico || []).slice().sort((a, b) => b.data - a.data);
+  if ($('ult-lista')) $('ult-lista').innerHTML = falha ? vazio('Não foi possível carregar o histórico.') : (ops.length ? ops.slice(0, 4).map(linhaOp).join('') : vazio('Ainda não há operações.'));
+  if ($('hist-lista')) $('hist-lista').innerHTML = falha ? vazio('Não foi possível carregar o histórico (' + esc(histErro) + ').') : (ops.length ? ops.map(linhaOp).join('') : vazio('Ainda não há operações.'));
+  if (typeof aoActualizarHistorico === 'function') aoActualizarHistorico(ops, falha);
+  renderPerfilStats();
+}
+
+// ── PERFIL ──
+function lerSessao() {
+  try {
+    const b64 = FixerAuth.getToken().split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+    const d = new Date(Number(atob(b64).split('|')[4]));
+    return isNaN(d) ? '' : fmtData(d) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  } catch (e) { return ''; }
+}
+async function carregarPerfil() {
+  let c = FixerAuth.getUser() || {};
+  try {
+    const r = await fetch(AUTH_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accao: 'minhaConta', token: FixerAuth.getToken() }) });
+    const j = await r.json();
+    if (j.ok) c = j;
+  } catch (e) { /* usa os dados da sessão */ }
+  const nome = c.empresa || c.email || '—';
+  $('pf-av').textContent = iniciais(nome);
+  $('pf-nome').textContent = nome;
+  $('pf-emp').textContent = c.empresa || '—';
+  $('pf-email').textContent = c.email || '—';
+  $('pf-role').textContent = c.role === 'admin' ? 'Administrador' : 'Utilizador';
+  $('pf-cid').textContent = c.clienteId || 'sem código';
+  $('pf-cid2').textContent = c.clienteId || '—';
+  const activos = c.modulos || [];
+  $('pf-mods').innerHTML = MODULOS_CONHECIDOS.map(([k, n]) => '<span class="mod' + (activos.includes(k) ? '' : ' off') + '">' + n + (activos.includes(k) ? '' : ' (não contratado)') + '</span>').join('');
+  $('pf-sessao').textContent = lerSessao() || '—';
+  renderPerfilStats();
+  verServico();
+}
+function renderPerfilStats() {
+  if (!$('pf-total')) return;
+  if (historico === null) { ['pf-total', 'pf-mes', 'pf-ultima'].forEach((i) => { $(i).textContent = '—'; }); return; }
+  const agora = new Date();
+  const ops = historico.slice().sort((a, b) => b.data - a.data);
+  $('pf-total').textContent = ops.length;
+  $('pf-mes').textContent = ops.filter((o) => o.data.getMonth() === agora.getMonth() && o.data.getFullYear() === agora.getFullYear()).length;
+  $('pf-ultima').textContent = ops.length ? fmtData(ops[0].data) : 'ainda nenhuma';
+}
+async function verServico() {
+  const alvo = $('pf-svc'), ver = $('sb-ver');
+  try {
+    const [a, b] = await Promise.all([fetch(GAS_URL).then((r) => r.json()), fetch(AUTH_URL).then((r) => r.json())]);
+    if (!a.ok || !b.ok) throw new Error('resposta inválida');
+    if (alvo) alvo.innerHTML = '<span class="ponto ok"></span>Operacional';
+    if (ver) ver.textContent = MODULO_NOME + ' ' + a.versao + ' · Auth ' + b.versao;
+  } catch (e) {
+    if (alvo) alvo.innerHTML = '<span class="ponto er"></span>Indisponível';
+    if (ver) ver.textContent = 'indisponível';
+  }
+}
+
+// ── CONFIGURAÇÕES ──
+function prepararConfig() {
+  aplicarTema();
+  verServico();
+  if (typeof aoPrepararConfig === 'function') aoPrepararConfig();
+}
+async function alterarPassword() {
+  const p1 = $('pw1').value, p2 = $('pw2').value;
+  if (p1.length < 8) { toast('Mínimo de 8 caracteres', 'warn'); return; }
+  if (p1 !== p2) { toast('As palavras-passe não coincidem', 'warn'); return; }
+  const btn = $('btn-pw');
+  btn.disabled = true;
+  try {
+    const r = await fetch(AUTH_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accao: 'alterarPassword', token: FixerAuth.getToken(), novaPassword: p1 }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.erro || 'Não foi possível alterar');
+    $('pw1').value = ''; $('pw2').value = '';
+    toast('Palavra-passe alterada', 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── PASSOS (assistente "nova operação") ──
+function irPasso(n) {
+  [1, 2, 3, 4].forEach((i) => {
+    if ($('p' + i)) $('p' + i).classList.toggle('on', i === n);
+    const st = $('pst' + i);
+    if (st) { st.classList.toggle('on', i === n); st.classList.toggle('ok', i < n); }
+  });
+  window.scrollTo({ top: 0 });
+}
+function ligarDrop(el, aoSoltar, aoClicar) {
+  el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', (e) => { e.preventDefault(); el.classList.remove('over'); aoSoltar(e.dataTransfer.files); });
+  el.addEventListener('click', aoClicar);
+}
+function setStep(id, state) { $(id).className = 'step' + (state ? ' ' + state : ''); }
+function prog(pct, label) {
+  $('pfill').style.width = pct + '%';
+  $('pbar-pct').textContent = pct + '%';
+  $('pbar-label').textContent = label;
+}
+function log(msg, cls = '') {
+  const box = $('logbox');
+  const d = document.createElement('div');
+  d.className = 'log-line' + (cls ? ' log-' + cls : '');
+  d.textContent = new Date().toLocaleTimeString('pt') + '  ' + msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+async function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res({ nome: file.name, tipo: file.type, conteudo: r.result.split(',')[1] });
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ═══ Fixer OS Essencial (hub) · entrada, módulos e actividade geral ═══
+const SW_FICHEIRO = 'sw.js';
+
+// Sessão: igual à dos módulos (mesmas chaves no localStorage = login único).
 const FixerAuth = (function () {
-  const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec'; // /exec do Auth.gs
   const TOKEN_KEY = 'fixeros_auth_token';
-  const USER_KEY  = 'fixeros_auth_user';
-
+  const USER_KEY = 'fixeros_auth_user';
   function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
-  function getUser()  { try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch(e){ return null; } }
+  function getUser() { try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch (e) { return null; } }
   function limparSessao() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
-
   async function login(email, password) {
-    const resp = await fetch(AUTH_GAS_URL, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ accao: 'login', email, password })
-    });
+    const resp = await fetch(AUTH_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ accao: 'login', email, password }) });
     const data = await resp.json();
     if (!data.ok) throw new Error(data.erro || 'Login falhou');
     localStorage.setItem(TOKEN_KEY, data.token);
     localStorage.setItem(USER_KEY, JSON.stringify(data.utilizador));
     return data.utilizador;
   }
-
   function pareceValido() {
     const token = getToken();
     if (!token || token.indexOf('.') === -1) return false;
     try {
-      const payloadB64 = token.split('.')[0];
-      const payload = atob(payloadB64.replace(/-/g,'+').replace(/_/g,'/'));
-      const expiraEm = Number(payload.split('|')[4]);
-      return Date.now() < expiraEm;
-    } catch(e) { return false; }
+      const payload = atob(token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'));
+      return Date.now() < Number(payload.split('|')[4]);
+    } catch (e) { return false; }
   }
-
   function logout() { limparSessao(); location.reload(); }
-
-  async function chamar(accao, extra) {
-    const resp = await fetch(AUTH_GAS_URL, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(Object.assign({ accao, token: getToken() }, extra || {}))
+  // Mostra a aplicação se há sessão válida; senão mostra a entrada.
+  function exigirLogin() {
+    return new Promise((resolve, reject) => {
+      document.body.classList.add('auth-ok'); // o hub tem o seu próprio ecrã de entrada
+      if (pareceValido() && getUser()) {
+        $('gate').style.display = 'none';
+        $('app').style.display = 'block';
+        resolve();
+      } else {
+        $('gate').style.display = 'flex';
+        $('app').style.display = 'none';
+        reject(new Error('sem sessão'));
+      }
     });
-    return resp.json();
   }
-
-  return { login, logout, getToken, getUser, pareceValido, chamar, AUTH_GAS_URL };
+  return { login, logout, getToken, getUser, exigirLogin };
 })();
 
-/* ================================================================
-   MÓDULOS — URLs reais + esquema de SSO por querystring.
-   Cada módulo, quando integrado, deve ler ?fixerosToken=... na
-   URL e, se válido para o seu domínio de módulo, gravá-lo como se
-   tivesse feito login normalmente — evitando pedir password de novo.
-   ================================================================ */
-const MODULOS = [
-  { id:'fiscal',    nome:'FiscalMoz IVA Assistant', tag:'declaração de IVA',
-    url:'https://fixersolutionstech-jpg.github.io/FiscalmozIVA/',
-    accent:'#4C8FE0', bg:'rgba(76,143,224,.12)', border:'rgba(76,143,224,.3)',
-    icon:'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 18h4"/>' },
-  { id:'reconbank', nome:'ReconBank AI', tag:'reconciliação bancária',
-    url:'https://fixersolutionstech-jpg.github.io/Reconbank/',
-    accent:'#3DB9A0', bg:'rgba(61,185,160,.12)', border:'rgba(61,185,160,.3)',
-    icon:'<path d="M7 16H3m0 0 4-4M3 16l4 4M17 8h4m0 0-4-4m4 4-4 4"/>' },
-  { id:'docscan',   nome:'DocScan AI', tag:'OCR e classificação PGC',
-    url:'https://fixersolutionstech-jpg.github.io/Fixer-DocScan/',
-    accent:'#E0692F', bg:'rgba(224,105,47,.12)', border:'rgba(224,105,47,.3)',
-    icon:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' }
-];
-
-let ultimoHistorico = [];
-
-// ── INIT ──
-window.addEventListener('load', () => {
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-  if (FixerAuth.pareceValido()) mostrarApp();
-  else mostrarGate();
-});
-
-function mostrarGate() {
-  document.getElementById('gate').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-}
-
-async function mostrarApp() {
-  document.getElementById('gate').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-
-  const u = FixerAuth.getUser();
-  if (!u) { mostrarGate(); return; }
-
-  document.getElementById('tb-empresa').textContent = u.empresa || '';
-  document.getElementById('tb-avatar').textContent = (u.email || '?').charAt(0).toUpperCase();
-  document.getElementById('hello-title').textContent = 'Olá, ' + (u.empresa || u.email) + '.';
-
-  document.getElementById('cfg-email').textContent = u.email;
-  document.getElementById('cfg-empresa').textContent = u.empresa || '—';
-  document.getElementById('cfg-role').textContent = u.role || '—';
-  document.getElementById('cfg-modulos').textContent = (u.modulos || []).join(', ') || 'nenhum';
-
-  renderModulos(u.modulos || []);
-  carregarHistorico();
-}
-
-// ── LOGIN ──
-document.getElementById('btn-login').addEventListener('click', tentarLogin);
-document.getElementById('in-pass').addEventListener('keydown', e => { if (e.key === 'Enter') tentarLogin(); });
-
+// ── ENTRADA ──
+$('btn-login').addEventListener('click', tentarLogin);
+$('in-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') tentarLogin(); });
 async function tentarLogin() {
-  const btn = document.getElementById('btn-login');
-  const erroEl = document.getElementById('gate-erro');
-  erroEl.textContent = '';
+  const btn = $('btn-login'), erro = $('gate-erro');
+  erro.textContent = '';
   btn.disabled = true; btn.textContent = 'A entrar...';
   try {
-    await FixerAuth.login(
-      document.getElementById('in-email').value.trim(),
-      document.getElementById('in-pass').value
-    );
-    mostrarApp();
+    await FixerAuth.login($('in-email').value.trim(), $('in-pass').value);
+    location.reload();
   } catch (e) {
-    erroEl.textContent = e.message;
-  } finally {
+    erro.textContent = e.message;
     btn.disabled = false; btn.textContent = 'Entrar';
   }
 }
 
-// ── NAVEGAÇÃO INTERNA ──
-function irPara(view) {
-  document.getElementById('view-dashboard').style.display = view === 'dashboard' ? 'block' : 'none';
-  document.getElementById('view-config').style.display = view === 'config' ? 'block' : 'none';
-}
+// ── MÓDULOS (cada um com a sua cor; SSO por querystring) ──
+const MODULOS = [
+  { id: 'fiscal', nome: 'FiscalMoz', tag: 'Declaração de IVA e Modelo A, com relatório de conformidade.',
+    url: 'https://fixersolutionstech-jpg.github.io/FiscalmozIVA/', cor: '#1D5FA6', corEsc: '#5BA3EA', cl: 'rgba(29,95,166,.14)',
+    icone: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 18h4"/>' },
+  { id: 'reconbank', nome: 'ReconBank', tag: 'Reconciliação bancária entre extracto e razão, com relatório.',
+    url: 'https://fixersolutionstech-jpg.github.io/Reconbank/', cor: '#0E6B54', corEsc: '#3CC283', cl: 'rgba(14,107,84,.14)',
+    icone: '<path d="M7 16H3m0 0 4-4M3 16l4 4M17 8h4m0 0-4-4m4 4-4 4"/>' },
+  { id: 'docscan', nome: 'DocScan', tag: 'Leitura de documentos e classificação PGC, em lote.',
+    url: 'https://fixersolutionstech-jpg.github.io/Fixer-DocScan/', cor: '#C4561C', corEsc: '#F0834A', cl: 'rgba(196,86,28,.14)',
+    icone: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' }
+];
+const NOME_MODULO = { fiscal: 'FiscalMoz', reconbank: 'ReconBank', docscan: 'DocScan' };
 
-// ── MÓDULOS ──
-function renderModulos(modulosDoUtilizador) {
-  const c = document.getElementById('mod-row');
-  c.innerHTML = '';
-  MODULOS.forEach(m => {
-    const temAcesso = modulosDoUtilizador.indexOf(m.id) !== -1;
-    const el = document.createElement(temAcesso ? 'a' : 'div');
-    el.className = 'mod-card' + (temAcesso ? '' : ' locked');
-    if (temAcesso) {
-      // Handoff de sessão: o módulo recebe o token na URL e pode
-      // auto-preencher a sessão dele, evitando novo login manual.
-      el.href = m.url + '?fixerosToken=' + encodeURIComponent(FixerAuth.getToken());
-      el.target = '_blank';
-      el.rel = 'noopener';
-    }
-    el.style.setProperty('--mod-accent', m.accent);
-    el.style.setProperty('--mod-bg', m.bg);
-    el.style.setProperty('--mod-border', m.border);
-    el.innerHTML = `
-      <div class="mod-top2">
-        <div class="mod-icon2"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${m.icon}</svg></div>
-        ${temAcesso ? '' : '<span class="lock-badge">Sem acesso</span>'}
-      </div>
-      <div>
-        <div class="mod-name2">${m.nome}</div>
-        <div class="mod-tag2">${m.tag}</div>
-      </div>
-      ${temAcesso ? `<div class="mod-arrow">Abrir módulo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></div>` : `<div class="mod-arrow" style="color:var(--text3)">Pedir acesso ao administrador</div>`}
-    `;
-    c.appendChild(el);
+function cartaoModulo(m, activos) {
+  const tem = activos.indexOf(m.id) !== -1;
+  const el = document.createElement(tem ? 'a' : 'div');
+  el.className = 'mod-card' + (tem ? '' : ' locked');
+  if (tem) {
+    el.href = m.url + '?fixerosToken=' + encodeURIComponent(FixerAuth.getToken());
+    el.target = '_blank';
+    el.rel = 'noopener';
+  }
+  el.style.setProperty('--mod-cor', m.cor);
+  el.style.setProperty('--mod-cor-esc', m.corEsc);
+  el.style.setProperty('--mod-cl', m.cl);
+  el.innerHTML = '<div class="mod-ico"><svg class="ic" viewBox="0 0 24 24">' + m.icone + '</svg></div>' +
+    (tem ? '' : '<span class="mini o">Sem acesso</span>') +
+    '<div><div class="mod-nome">' + esc(m.nome) + '</div><div class="mod-tag">' + esc(m.tag) + '</div></div>' +
+    (tem ? '<div class="mod-abrir">Abrir módulo <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>'
+         : '<div class="mod-abrir" style="color:var(--text3)">Peça acesso ao administrador</div>');
+  return el;
+}
+function renderModulos() {
+  const u = FixerAuth.getUser() || {};
+  const activos = u.modulos || [];
+  ['mod-row', 'mod-row-ini'].forEach((id) => {
+    const c = $(id);
+    c.innerHTML = '';
+    MODULOS.forEach((m) => c.appendChild(cartaoModulo(m, activos)));
   });
 }
 
-// ── HISTÓRICO ──
-async function carregarHistorico() {
-  const el = document.getElementById('hist-list');
-  el.innerHTML = '<div class="hist-empty">A carregar histórico...</div>';
-  try {
-    const data = await FixerAuth.chamar('listarOperacoes', { limite: 20 });
-    if (!data.ok) throw new Error(data.erro || 'Falha ao carregar histórico');
-    ultimoHistorico = data.operacoes || [];
-    renderHistorico(ultimoHistorico);
-    renderKpis(ultimoHistorico);
-  } catch (e) {
-    el.innerHTML = `<div class="hist-empty">Não foi possível carregar o histórico agora.<br/><span style="font-family:var(--mono);font-size:11px">${e.message}</span></div>`;
+// ── HISTÓRICO GERAL ──
+let filtroModulo = '';
+// Os módulos registam o resumo em texto; aqui é apresentado em linguagem normal.
+function descreverOp(op) {
+  const r = op.bruto || op.titulo || '';
+  let m;
+  if (op.modulo === 'fiscal' && (m = r.match(/^IVA\s+(\d{4}-\d{2})\s+—\s+(.*?)\s+\(semáforo\s+(\w+)\)\s*$/))) {
+    const s = { VERDE: 'conforme', AMARELO: 'com alertas', VERMELHO: 'com erros críticos' }[m[3].toUpperCase()] || '';
+    return { nome: 'Declaração de IVA · ' + m[2], meta: [rotuloPeriodo(m[1]), s].filter(Boolean).join(' · ') };
   }
-}
-
-function renderHistorico(ops) {
-  const el = document.getElementById('hist-list');
-  if (!ops.length) {
-    el.innerHTML = `<div class="hist-empty">Ainda sem operações registadas aqui.<br/>Processa algo num módulo — vai aparecer neste histórico automaticamente.</div>`;
-    return;
+  if (op.modulo === 'reconbank' && (m = r.match(/^Reconciliação bancária\s+—\s+(.*?)\s*(?:\(([\d-]+)\))?\s*(?:\|\s*C:(\d+)\s+D:(\d+)\s+P:(\d+))?\s*$/))) {
+    const n = m[3] !== undefined ? m[3] + ' conciliados · ' + m[4] + ' divergências · ' + m[5] + ' pendentes' : '';
+    return { nome: 'Reconciliação · ' + m[1], meta: [rotuloPeriodo(m[2]), n].filter(Boolean).join(' · ') };
   }
-  el.innerHTML = ops.map(o => {
-    const data = new Date(o.timestamp);
-    const dataFmt = isNaN(data) ? o.timestamp : data.toLocaleString('pt-MZ', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-    return `
-      <div class="hist-item">
-        <span class="hist-dot ${o.estado || 'concluido'}"></span>
-        <div class="hist-main">
-          <div class="hist-resumo">${o.resumo || '(sem resumo)'}</div>
-          <div class="hist-meta">${o.modulo} · ${dataFmt} · ${o.utilizador}</div>
-        </div>
-        ${o.linkPrincipal ? `<a class="hist-link" href="${o.linkPrincipal}" target="_blank" rel="noopener">Abrir →</a>` : ''}
-      </div>`;
-  }).join('');
+  if (op.modulo === 'docscan' && (m = r.match(/^DocScan:\s*(\d+)\s+documento\(s\),\s*(\d+)\s+a confirmar(?:\s*—\s*(.*))?$/))) {
+    return { nome: 'Lote · ' + (m[3] || 'documentos'), meta: m[1] + ' documento(s) · ' + m[2] + ' a confirmar' };
+  }
+  return { nome: r || 'Operação', meta: '' };
 }
-
-function renderKpis(ops) {
+function nomeOp(op) { return descreverOp(op).nome; }
+function metaOp(op) { return [NOME_MODULO[op.modulo] || op.modulo, descreverOp(op).meta].filter(Boolean).join(' · '); }
+function filtrarHub(f) {
+  filtroModulo = f;
+  document.querySelectorAll('#seg-filtro button').forEach((b) => b.classList.toggle('on', b.dataset.f === f));
+  renderHistorico();
+}
+// Sobrepõe a lista do histórico para respeitar o filtro por módulo.
+function aoActualizarHistorico(ops, falha) {
   const trintaDias = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  const recentes = ops.filter(o => new Date(o.timestamp).getTime() >= trintaDias);
-  document.getElementById('kpi-total').textContent = recentes.length;
-  document.getElementById('kpi-fiscal').textContent = recentes.filter(o => o.modulo === 'fiscal').length;
-  document.getElementById('kpi-recon').textContent = recentes.filter(o => o.modulo === 'reconbank').length;
-  document.getElementById('kpi-docscan').textContent = recentes.filter(o => o.modulo === 'docscan').length;
+  const rec = ops.filter((o) => o.data.getTime() >= trintaDias);
+  $('kpi-total').textContent = falha ? '—' : rec.length;
+  $('kpi-fiscal').textContent = falha ? '—' : rec.filter((o) => o.modulo === 'fiscal').length;
+  $('kpi-recon').textContent = falha ? '—' : rec.filter((o) => o.modulo === 'reconbank').length;
+  $('kpi-docscan').textContent = falha ? '—' : rec.filter((o) => o.modulo === 'docscan').length;
+  if (!falha && filtroModulo) {
+    const f = ops.filter((o) => o.modulo === filtroModulo);
+    $('hist-lista').innerHTML = f.length ? f.map(linhaOp).join('') : '<div class="vazio">Sem operações neste módulo.</div>';
+  }
 }
 
-// ── CONFIGURAÇÕES ──
-async function alterarPassword() {
-  const msgEl = document.getElementById('cfg-msg');
-  const nova = document.getElementById('cfg-pass-nova').value;
-  msgEl.className = 'cfg-msg'; msgEl.textContent = '';
-  if (!nova || nova.length < 8) {
-    msgEl.className = 'cfg-msg err'; msgEl.textContent = 'A password deve ter pelo menos 8 caracteres.';
-    return;
-  }
-  try {
-    const data = await FixerAuth.chamar('alterarPassword', { novaPassword: nova });
-    if (!data.ok) throw new Error(data.erro || 'Falha ao alterar password');
-    msgEl.className = 'cfg-msg ok'; msgEl.textContent = 'Password alterada com sucesso.';
-    document.getElementById('cfg-pass-nova').value = '';
-  } catch (e) {
-    msgEl.className = 'cfg-msg err'; msgEl.textContent = e.message;
-  }
-}
+function aoIniciar() { renderModulos(); }
+
 </script>
 </body>
 </html>

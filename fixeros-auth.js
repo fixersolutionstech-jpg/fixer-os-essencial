@@ -1,5 +1,5 @@
 /* ================================================================
-   FIXER OS — fixeros-auth.js (v1.1)
+   FIXER OS — fixeros-auth.js (v1.2)
    Camada de autenticação partilhada, para incluir no <head> ou
    antes do </body> de qualquer um dos 3 index.html (Fiscal,
    ReconBank, DocScan).
@@ -14,6 +14,8 @@
       o token no payload: { ...payload, authToken: FixerAuth.getToken() }
       — cada Code.gs dos 3 módulos deve validar esse token (ver
       snippet de middleware em fixeros-auth-middleware.gs.txt)
+
+   v1.2 — ecrã de login com o tema Fixer OS (claro/escuro, cor por módulo) e clienteId no SSO.
 
    v1.1 — CORRECÇÃO: exigirLogin() agora lê e valida o
    "?fixerosToken=" que o hub (Fixer OS Essencial) coloca na URL ao
@@ -137,7 +139,7 @@ const FixerAuth = (function () {
 
       localStorage.setItem(TOKEN_KEY, tokenDaUrl);
       localStorage.setItem(USER_KEY, JSON.stringify({
-        email: data.email, empresa: data.empresa, role: data.role, modulos: data.modulos
+        email: data.email, empresa: data.empresa, clienteId: data.clienteId, role: data.role, modulos: data.modulos
       }));
       return true;
     } catch (e) {
@@ -148,31 +150,37 @@ const FixerAuth = (function () {
   }
 
   function renderGate(modulo) {
-    document.body.innerHTML = `
-      <div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;
-                  background:#0A1628;font-family:system-ui,sans-serif;padding:20px">
-        <div style="width:100%;max-width:360px;background:#0F2040;border:1px solid #1E3A6E;
-                    border-radius:18px;padding:28px 24px">
-          <div style="font-size:20px;font-weight:800;color:#E8F0FF;margin-bottom:4px">Fixer OS</div>
-          <div style="font-size:12px;color:#7B9CC8;margin-bottom:24px;font-family:monospace">
-            Acesso — módulo: ${modulo || '—'}
-          </div>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <input id="fa-email" type="email" placeholder="Email" autocomplete="username"
-              style="background:#162B52;border:1px solid #254880;border-radius:8px;color:#E8F0FF;
-                     padding:12px;font-size:14px;outline:none"/>
-            <input id="fa-pass" type="password" placeholder="Password" autocomplete="current-password"
-              style="background:#162B52;border:1px solid #254880;border-radius:8px;color:#E8F0FF;
-                     padding:12px;font-size:14px;outline:none"/>
-            <button id="fa-btn"
-              style="background:linear-gradient(135deg,#1558AA,#1A6FD4);color:#fff;border:none;
-                     border-radius:8px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">
-              Entrar
-            </button>
-            <div id="fa-erro" style="color:#EF4444;font-size:12px;min-height:16px"></div>
-          </div>
-        </div>
-      </div>`;
+    // Cores: a do módulo vem de <body data-fixeros-cor="#hex">; o tema segue a
+    // preferência partilhada 'fixeros_tema' (claro, escuro ou automático).
+    var cor = (document.body && document.body.dataset.fixerosCor) || '#0E6B54';
+    var pref = 'auto';
+    try { pref = localStorage.getItem('fixeros_tema') || 'auto'; } catch (e) {}
+    var escuro = pref === 'dark' || (pref === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    var c = escuro
+      ? { bg: '#0E1210', card: '#171D1A', borda: '#2A3530', texto: '#E8F0EC', suave: '#9DB0A6', campo: '#0E1210' }
+      : { bg: '#F4F6F3', card: '#FFFFFF', borda: '#DDE3DC', texto: '#15201E', suave: '#5C6B64', campo: '#FFFFFF' };
+    var nomes = { fiscal: 'FiscalMoz', reconbank: 'ReconBank', docscan: 'DocScan' };
+    var nome = nomes[modulo] || 'Fixer OS';
+    document.body.style.background = c.bg;
+    document.body.style.margin = '0';
+    document.body.style.visibility = 'visible';
+    document.body.innerHTML =
+      '<div style="min-height:100dvh;display:flex;flex-direction:column;background:' + c.bg + ';font-family:Outfit,system-ui,sans-serif">' +
+        '<div style="height:10px;background:' + cor + '"></div>' +
+        '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px">' +
+          '<div style="width:100%;max-width:380px;background:' + c.card + ';border:1px solid ' + c.borda + ';border-top:6px solid ' + cor + ';border-radius:18px;padding:30px 26px">' +
+            '<div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:' + cor + ';margin-bottom:6px">Fixer OS</div>' +
+            '<div style="font-size:24px;font-weight:700;color:' + c.texto + ';margin-bottom:4px">' + nome + '</div>' +
+            '<div style="font-size:13.5px;color:' + c.suave + ';margin-bottom:22px">Inicie sessão para continuar.</div>' +
+            '<div style="display:flex;flex-direction:column;gap:12px">' +
+              '<input id="fa-email" type="email" placeholder="Email" autocomplete="username" style="background:' + c.campo + ';border:1.5px solid ' + c.borda + ';border-radius:10px;color:' + c.texto + ';padding:13px;font-size:14px;outline:none;font-family:inherit"/>' +
+              '<input id="fa-pass" type="password" placeholder="Palavra-passe" autocomplete="current-password" style="background:' + c.campo + ';border:1.5px solid ' + c.borda + ';border-radius:10px;color:' + c.texto + ';padding:13px;font-size:14px;outline:none;font-family:inherit"/>' +
+              '<button id="fa-btn" style="background:' + cor + ';color:#fff;border:none;border-radius:10px;padding:14px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit">Entrar</button>' +
+              '<div id="fa-erro" style="color:#E5566D;font-size:12.5px;min-height:16px"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
 
     const btn = document.getElementById('fa-btn');
     const emailEl = document.getElementById('fa-email');
@@ -186,7 +194,7 @@ const FixerAuth = (function () {
         const u = await login(emailEl.value.trim(), passEl.value);
         if (modulo && u.modulos.indexOf(modulo) === -1) {
           limparSessao();
-          erroEl.textContent = 'A tua conta não tem acesso ao módulo "' + modulo + '".';
+          erroEl.textContent = 'A sua conta não tem acesso a este módulo.';
           btn.disabled = false; btn.textContent = 'Entrar';
           return;
         }

@@ -2,15 +2,30 @@
   "name": "Fixer OS Essencial",
   "short_name": "Fixer OS",
   "description": "Centro de comando — histórico, dashboards e acesso aos módulos Fixer OS",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0A1220",
   "theme_color": "#0A1220",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ],
-  "categories": ["finance", "productivity", "business"],
-  "lang": "pt"
+  "categories": [
+    "finance",
+    "productivity",
+    "business"
+  ],
+  "lang": "pt",
+  "scope": "./"
 }

@@ -1,5 +1,5 @@
 /* ================================================================
-   FIXER OS — fixeros-auth.js (v1.2)
+   FIXER OS — fixeros-auth.js (v1.3)
    Camada de autenticação partilhada, para incluir no <head> ou
    antes do </body> de qualquer um dos 3 index.html (Fiscal,
    ReconBank, DocScan).
@@ -14,6 +14,16 @@
       o token no payload: { ...payload, authToken: FixerAuth.getToken() }
       — cada Code.gs dos 3 módulos deve validar esse token (ver
       snippet de middleware em fixeros-auth-middleware.gs.txt)
+
+   v1.3 — SESSÃO EXPIRADA SEM PERDER O TRABALHO: o token dura 12 h
+   (TOKEN_VALIDADE_H no Auth). Antes, um pedido feito com o token
+   vencido devolvia "Token expirado" e o contabilista tinha de
+   recarregar a página e refazer tudo. Agora este ficheiro vigia os
+   pedidos que levam o token: se a sessão venceu (antes de enviar ou
+   na resposta do servidor), abre um login POR CIMA do ecrã (os
+   ficheiros e resultados ficam onde estão) e, depois de entrar,
+   repete o mesmo pedido com o token novo. Nenhum módulo precisa de
+   mudar código.
 
    v1.2 — ecrã de login com o tema Fixer OS (claro/escuro, cor por módulo) e clienteId no SSO.
 
@@ -49,8 +59,11 @@ const FixerAuth = (function () {
   function getUser()  { try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch(e) { return null; } }
   function limparSessao() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
 
+  // fetch original do browser: os pedidos do próprio login nunca passam pela vigilância da sessão (v1.3)
+  const fetchOriginal = window.fetch.bind(window);
+
   async function login(email, password) {
-    const resp = await fetch(AUTH_GAS_URL, {
+    const resp = await fetchOriginal(AUTH_GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ accao: 'login', email, password })
@@ -125,7 +138,7 @@ const FixerAuth = (function () {
     window.history.replaceState({}, document.title, urlLimpa);
 
     try {
-      const resp = await fetch(AUTH_GAS_URL, {
+      const resp = await fetchOriginal(AUTH_GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ accao: 'validarToken', token: tokenDaUrl, modulo: modulo })
@@ -149,16 +162,119 @@ const FixerAuth = (function () {
     }
   }
 
-  function renderGate(modulo) {
-    // Cores: a do módulo vem de <body data-fixeros-cor="#hex">; o tema segue a
-    // preferência partilhada 'fixeros_tema' (claro, escuro ou automático).
-    var cor = (document.body && document.body.dataset.fixerosCor) || '#0E6B54';
+  // Cores: a do módulo vem de <body data-fixeros-cor="#hex">; o tema segue a
+  // preferência partilhada 'fixeros_tema' (claro, escuro ou automático).
+  function coresTema() {
     var pref = 'auto';
     try { pref = localStorage.getItem('fixeros_tema') || 'auto'; } catch (e) {}
     var escuro = pref === 'dark' || (pref === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
     var c = escuro
       ? { bg: '#0E1210', card: '#171D1A', borda: '#2A3530', texto: '#E8F0EC', suave: '#9DB0A6', campo: '#0E1210' }
       : { bg: '#F4F6F3', card: '#FFFFFF', borda: '#DDE3DC', texto: '#15201E', suave: '#5C6B64', campo: '#FFFFFF' };
+    c.cor = (document.body && document.body.dataset.fixerosCor) || '#0E6B54';
+    return c;
+  }
+
+  // ================================================================
+  // v1.3 — RENOVAR A SESSÃO SEM PERDER O TRABALHO
+  //
+  // Os pedidos que levam o token actual no corpo (authToken / token)
+  // passam por aqui. Se a sessão já venceu antes de enviar, ou se o
+  // servidor responde que o token expirou/é inválido, abre-se um login
+  // em janela por cima do ecrã (sem apagar o que está na página) e o
+  // mesmo pedido é repetido UMA vez com o token novo. Se a pessoa
+  // cancelar, a app recebe a resposta original e mostra o erro de
+  // sempre. Falhas de rede ("Failed to fetch") não pedem login.
+  // ================================================================
+  const RX_SESSAO_VENCIDA = /token expirado|token inv[aá]lido|token malformado|assinatura inv[aá]lida|sess[aã]o em falta|sess[aã]o inv[aá]lida|login novamente/i;
+  let loginEmCurso = null;   // vários pedidos ao mesmo tempo → uma só janela de login
+
+  function sessaoVencida(data) {
+    return !!(data && data.ok === false && RX_SESSAO_VENCIDA.test(String(data.erro || data.error || '')));
+  }
+
+  // Abre a janela de login e resolve com o token novo; rejeita se a pessoa cancelar.
+  function pedirNovoLogin() {
+    if (loginEmCurso) return loginEmCurso;
+    loginEmCurso = new Promise(function (resolve, reject) {
+      var c = coresTema();
+      var modulo = document.body.dataset.fixerosModulo || '';
+      var anterior = getUser() || {};
+      var fundo = document.createElement('div');
+      fundo.id = 'fa-renovar';
+      fundo.setAttribute('role', 'dialog');
+      fundo.setAttribute('aria-modal', 'true');
+      fundo.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Outfit,system-ui,sans-serif';
+      fundo.innerHTML =
+        '<div style="width:100%;max-width:380px;background:' + c.card + ';border:1px solid ' + c.borda + ';border-top:6px solid ' + c.cor + ';border-radius:18px;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.35)">' +
+          '<div style="font-size:19px;font-weight:700;color:' + c.texto + ';margin-bottom:6px">A sessão expirou</div>' +
+          '<div style="font-size:13.5px;color:' + c.suave + ';margin-bottom:18px">Entre de novo para continuar. O seu trabalho continua no ecrã e o pedido é repetido sozinho.</div>' +
+          '<div style="display:flex;flex-direction:column;gap:12px">' +
+            '<input id="fa-r-email" type="email" placeholder="Email" autocomplete="username" style="background:' + c.campo + ';border:1.5px solid ' + c.borda + ';border-radius:10px;color:' + c.texto + ';padding:13px;font-size:14px;outline:none;font-family:inherit"/>' +
+            '<input id="fa-r-pass" type="password" placeholder="Palavra-passe" autocomplete="current-password" style="background:' + c.campo + ';border:1.5px solid ' + c.borda + ';border-radius:10px;color:' + c.texto + ';padding:13px;font-size:14px;outline:none;font-family:inherit"/>' +
+            '<button id="fa-r-btn" style="background:' + c.cor + ';color:#fff;border:none;border-radius:10px;padding:14px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit">Entrar e continuar</button>' +
+            '<button id="fa-r-cancelar" style="background:transparent;color:' + c.suave + ';border:none;padding:6px;font-size:13px;cursor:pointer;font-family:inherit">Cancelar</button>' +
+            '<div id="fa-r-erro" style="color:#E5566D;font-size:12.5px;min-height:16px"></div>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(fundo);
+      var emailEl = fundo.querySelector('#fa-r-email'), passEl = fundo.querySelector('#fa-r-pass');
+      var btn = fundo.querySelector('#fa-r-btn'), erroEl = fundo.querySelector('#fa-r-erro');
+      emailEl.value = anterior.email || '';
+      (anterior.email ? passEl : emailEl).focus();
+
+      function fechar() { fundo.remove(); loginEmCurso = null; }
+      async function tentar() {
+        erroEl.textContent = '';
+        btn.disabled = true; btn.textContent = 'A entrar...';
+        try {
+          const u = await login(emailEl.value.trim(), passEl.value);
+          if (modulo && u.modulos.indexOf(modulo) === -1) {
+            limparSessao();
+            erroEl.textContent = 'A sua conta não tem acesso a este módulo.';
+            btn.disabled = false; btn.textContent = 'Entrar e continuar';
+            return;
+          }
+          fechar();
+          // Outra conta = outra empresa: o que está no ecrã não lhe pertence → recomeça a app
+          if (anterior.email && u.email && anterior.email.toLowerCase() !== String(u.email).toLowerCase()) { location.reload(); return; }
+          resolve(getToken());
+        } catch (e) {
+          erroEl.textContent = e.message;
+          btn.disabled = false; btn.textContent = 'Entrar e continuar';
+        }
+      }
+      btn.addEventListener('click', tentar);
+      passEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') tentar(); });
+      fundo.querySelector('#fa-r-cancelar').addEventListener('click', function () { fechar(); reject(new Error('Sessão expirada — login cancelado')); });
+    });
+    return loginEmCurso;
+  }
+
+  // Substitui o fetch: só mexe em pedidos cujo corpo (texto) leva o token actual.
+  async function fetchVigiado(recurso, opcoes) {
+    const tokenUsado = getToken();
+    const corpo = opcoes && opcoes.body;
+    if (!tokenUsado || typeof corpo !== 'string' || corpo.indexOf(tokenUsado) === -1) return fetchOriginal(recurso, opcoes);
+    const comToken = function (t) { return Object.assign({}, opcoes, { body: corpo.split(tokenUsado).join(t) }); };
+
+    // 1) Já se sabe que venceu: pede o login antes de gastar um pedido (e o envio de ficheiros) em vão
+    if (!pareceValido()) {
+      try { return fetchOriginal(recurso, comToken(await pedirNovoLogin())); }
+      catch (e) { return fetchOriginal(recurso, opcoes); }   // cancelou: segue como antes (o servidor recusa)
+    }
+    // 2) O servidor diz que a sessão não vale (relógio do PC errado, token revogado…)
+    const resp = await fetchOriginal(recurso, opcoes);
+    let data = null;
+    try { data = await resp.clone().json(); } catch (e) { return resp; }
+    if (!sessaoVencida(data)) return resp;
+    try { return fetchOriginal(recurso, comToken(await pedirNovoLogin())); }
+    catch (e) { return resp; }
+  }
+  window.fetch = fetchVigiado;
+
+  function renderGate(modulo) {
+    var c = coresTema(), cor = c.cor;
     var nomes = { fiscal: 'FiscalMoz', reconbank: 'ReconBank', docscan: 'DocScan' };
     var nome = nomes[modulo] || 'Fixer OS';
     document.body.style.background = c.bg;

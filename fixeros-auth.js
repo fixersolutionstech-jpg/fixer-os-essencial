@@ -1,5 +1,5 @@
 /* ================================================================
-   FIXER OS — fixeros-auth.js (v1.3)
+   FIXER OS — fixeros-auth.js (v1.4)
    Camada de autenticação partilhada, para incluir no <head> ou
    antes do </body> de qualquer um dos 3 index.html (Fiscal,
    ReconBank, DocScan).
@@ -324,6 +324,39 @@ const FixerAuth = (function () {
     passEl.addEventListener('keydown', e => { if (e.key === 'Enter') tentar(); });
   }
 
+  // ================================================================
+  // v1.4 (P3) - FAIXA DE AVISO DO PLANO
+  // Pergunta o estado a Auth sem bloquear o arranque e mostra so o texto,
+  // sem numeros de uso (esses ficam no painel da Fixer). Qualquer falha
+  // aqui e ignorada: a faixa nunca impede o trabalho.
+  // ================================================================
+  async function mostrarFaixaPlano(modulo) {
+    try {
+      const resp = await fetchOriginal(AUTH_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ accao: 'validarToken', token: getToken(), modulo: modulo, leitura: true })
+      });
+      const data = await resp.json();
+      const s = data && data.ok && data.subscricao;
+      const texto = s && (s.mensagem || s.aviso);
+      if (!texto || document.getElementById('fa-faixa')) return;
+      const faixa = document.createElement('div');
+      faixa.id = 'fa-faixa';
+      faixa.setAttribute('role', 'status');
+      faixa.style.cssText = 'display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 16px;font:500 13.5px Outfit,system-ui,sans-serif;color:#fff;background:' + (s.estado === 'suspenso' ? '#B3261E' : '#9A6700');
+      const span = document.createElement('span');
+      span.textContent = texto;
+      const fechar = document.createElement('button');
+      fechar.textContent = '\u00d7';
+      fechar.setAttribute('aria-label', 'Fechar aviso');
+      fechar.style.cssText = 'background:none;border:none;color:#fff;font-size:18px;cursor:pointer';
+      fechar.addEventListener('click', function () { faixa.remove(); });
+      faixa.appendChild(span); faixa.appendChild(fechar);
+      document.body.prepend(faixa);
+    } catch (e) { /* sem rede ou Auth em baixo: segue sem faixa */ }
+  }
+
   async function exigirLogin(modulo) {
     document.body.dataset.fixerosModulo = modulo;
 
@@ -335,6 +368,7 @@ const FixerAuth = (function () {
     }
 
     if (pareceValido() && utilizadorTemAcesso(modulo)) {
+      mostrarFaixaPlano(modulo);   // v1.4: sem await, nunca atrasa o arranque
       return getUser();
     }
 

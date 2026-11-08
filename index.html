@@ -920,6 +920,22 @@ const FixerAuth = (function () {
     } catch (e) { return false; }
   }
   function logout() { limparSessao(); location.reload(); }
+  // P3: mesma faixa dos módulos (só texto, sem números de uso); qualquer falha é ignorada.
+  async function mostrarFaixaPlano() {
+    try {
+      const resp = await fetch(AUTH_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ accao: 'minhaConta', token: getToken() }) });
+      const data = await resp.json();
+      const s = data && data.subscricao;
+      const texto = s && (s.mensagem || s.aviso);
+      if (!texto || document.getElementById('fa-faixa')) return;
+      const faixa = document.createElement('div');
+      faixa.id = 'fa-faixa';
+      faixa.setAttribute('role', 'status');
+      faixa.style.cssText = 'padding:10px 16px;font:500 13.5px Outfit,system-ui,sans-serif;color:#fff;background:' + (s.estado === 'suspenso' ? '#B3261E' : '#9A6700');
+      faixa.textContent = texto;
+      document.body.prepend(faixa);
+    } catch (e) { /* segue sem faixa */ }
+  }
   // Mostra a aplicação se há sessão válida; senão mostra a entrada.
   function exigirLogin() {
     return new Promise((resolve, reject) => {
@@ -927,6 +943,7 @@ const FixerAuth = (function () {
       if (pareceValido() && getUser()) {
         $('gate').style.display = 'none';
         $('app').style.display = 'block';
+        mostrarFaixaPlano();   // P3: sem await, nunca atrasa o arranque
         resolve();
       } else {
         $('gate').style.display = 'flex';

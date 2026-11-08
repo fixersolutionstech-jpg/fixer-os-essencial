@@ -896,7 +896,7 @@ html[data-pele="pro"] .view.on > *:nth-child(n+5) { animation-delay: .34s; }
                 <select id="f-manual">
                   <option value="">Automático (pelas datas)</option>
                   <option value="activo">Activo (ignora as datas)</option>
-                  <option value="liberado">Liberado (ignora datas e o tecto 2×)</option>
+                  <option value="liberado">Liberado (ignora datas)</option>
                   <option value="suspenso">Suspenso (só leitura)</option>
                 </select></div>
               <div class="field"><label for="f-notas">Notas</label><textarea id="f-notas" rows="2" maxlength="500"></textarea></div>
@@ -1411,7 +1411,7 @@ const CAMPOS_PLANO = [
   ['escalao', 'Escalão (id)', 'text'], ['precoMZN', 'Preço (MZN/mês, 1 módulo)', 'number'], ['precoModuloExtraMZN', 'Módulo extra (MZN)', 'number'],
   ['limiteEmpresas', 'Empresas geridas', 'number'], ['limiteContasPorEmpresa', 'Contas por empresa', 'number'],
   ['limiteDocsPorEmpresaMes', 'Documentos por empresa/mês', 'number'], ['limiteDeclaracoesPorEmpresaMes', 'Declarações por empresa/mês', 'number'],
-  ['limiteOperacoesMes', 'Operações/mês por módulo (tecto 2×)', 'number'], ['limiteIAUSDMes', 'IA USD/mês (aviso)', 'number']
+  ['limiteOperacoesMes', 'Operações/mês por módulo (só alerta)', 'number'], ['limiteIAUSDMes', 'IA USD/mês (aviso)', 'number']
 ];
 const CAMPOS_MODULO = [['moduloId', 'ID (ex.: irps)', 'text'], ['nome', 'Nome', 'text'], ['escalaoMinimo', 'Escalão mínimo', 'text'],
   ['urlBackend', 'URL do backend (Apps Script …/exec)', 'url'], ['versao', 'Versão', 'text'], ['notas', 'Notas', 'text'],
@@ -1427,7 +1427,7 @@ function badgeEstado(c) {
   const cls = e === 'suspenso' ? 'er' : (e === 'tolerancia' ? 'av' : '');
   let t = ROTULO_ESTADO[e] || e;
   if (e === 'tolerancia' && est.diasParaSuspensao !== undefined) t += ' · ' + est.diasParaSuspensao + ' d';
-  if (est && est.tectoAtingido) t += ' · tecto';
+  if (est && est.tectoAtingido) t += ' · acima de 2×';
   return '<span class="badge ' + cls + '">' + esc(t) + '</span>';
 }
 function fmtDia(iso) { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : '—'; }
@@ -1611,10 +1611,21 @@ function actualizarMensal() {
 }
 function renderUso(c) {
   const linhas = Object.keys(c.uso.porModulo || {}).map((m) => '<div class="uso-l"><span>' + esc(nomeModulo(m)) + '</span><b>' + c.uso.porModulo[m] + ' operação(ões)</b></div>');
+  const NOME_UNIDADE = { docscan: 'documento(s)', reconbank: 'conta(s)', fiscal: 'declaração(ões)' };
+  Object.keys(c.uso.unidades || {}).forEach((m) => {
+    const u = c.uso.unidades[m];
+    const porEmpresa = Object.keys(u.porEmpresa).map((g) => esc(((c.uso.empresas || {})[g] || {}).nome || g) + ': ' + u.porEmpresa[g]).join(' · ');
+    linhas.push('<div class="uso-l"><span>' + esc(nomeModulo(m)) + '</span><b>' + u.total + ' ' + (NOME_UNIDADE[m] || 'unidade(s)') + '</b></div><div class="t-sub">' + porEmpresa + '</div>');
+  });
+  const empresasUso = Object.values(c.uso.empresas || {});
+  if (empresasUso.length) {
+    const semNuit = empresasUso.filter((e) => e.semNuit).length;
+    linhas.push('<div class="t-sub">Empresas geridas: ' + empresasUso.length + (c.limiteEmpresas ? ' de ' + c.limiteEmpresas : '') + (semNuit ? ' · ' + semNuit + ' sem NUIT' : '') + '</div>');
+  }
   if (c.estado.limite) {
     const pct = Math.min(200, c.estado.percentagem);
     linhas.push('<div class="barra"><div class="barra-in ' + (c.estado.nivelLimite ? 'av' : '') + '" style="width:' + (pct / 2) + '%"></div><span class="barra-100"></span></div>' +
-      '<div class="t-sub">' + c.estado.uso + ' de ' + c.estado.limite + ' (' + c.estado.percentagem + '%); o tecto é ' + (2 * c.estado.limite) + '</div>');
+      '<div class="t-sub">' + c.estado.uso + ' de ' + c.estado.limite + ' (' + c.estado.percentagem + '%)' + (c.estado.moduloLimite ? ' em ' + esc(nomeModulo(c.estado.moduloLimite)) : '') + '; só alerta, nunca pára o trabalho</div>');
   }
   linhas.push('<div class="uso-l"><span>IA</span><b>' + c.ia.chamadas + ' chamada(s) · ' + (c.ia.usd || 0).toFixed(4) + ' USD' + (c.ia.limiteUSD ? ' (' + c.ia.percentagem + '% de ' + c.ia.limiteUSD + ')' : '') + '</b></div>');
   return linhas.join('') || '<div class="vazio">Sem uso neste mês.</div>';

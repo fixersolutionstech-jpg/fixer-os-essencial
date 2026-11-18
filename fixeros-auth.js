@@ -1,5 +1,5 @@
 /* ================================================================
-   FIXER OS — fixeros-auth.js (v1.4)
+   FIXER OS — fixeros-auth.js (v1.5)
    Camada de autenticação partilhada, para incluir no <head> ou
    antes do </body> de qualquer um dos 3 index.html (Fiscal,
    ReconBank, DocScan).
@@ -14,6 +14,13 @@
       o token no payload: { ...payload, authToken: FixerAuth.getToken() }
       — cada Code.gs dos 3 módulos deve validar esse token (ver
       snippet de middleware em fixeros-auth-middleware.gs.txt)
+
+   v1.5 — SESSÃO PARTILHADA PROTEGIDA (2026-11-18): todos os módulos e o
+   painel vivem no mesmo domínio e partilham a sessão. Uma conta sem
+   acesso a ESTE módulo já não apaga a sessão dos outros: o login sem
+   acesso não grava nada, e uma sessão válida sem o módulo mostra o aviso
+   sem a apagar (antes, abrir um módulo novo deixava o painel sem token =
+   "Token malformado" ao gravar).
 
    v1.3 — SESSÃO EXPIRADA SEM PERDER O TRABALHO: o token dura 12 h
    (TOKEN_VALIDADE_H no Auth). Antes, um pedido feito com o token
@@ -62,7 +69,10 @@ const FixerAuth = (function () {
   // fetch original do browser: os pedidos do próprio login nunca passam pela vigilância da sessão (v1.3)
   const fetchOriginal = window.fetch.bind(window);
 
-  async function login(email, password) {
+  const MSG_SEM_ACESSO = 'A sua conta não tem acesso a este módulo.';
+  // v1.5: com "modulo", só grava a sessão se a conta tiver acesso a esse módulo
+  // (assim a sessão que já existia, de outra conta ou de outro módulo, fica intacta).
+  async function login(email, password, modulo) {
     const resp = await fetchOriginal(AUTH_GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
@@ -70,6 +80,8 @@ const FixerAuth = (function () {
     });
     const data = await resp.json();
     if (!data.ok) throw new Error(data.erro || 'Login falhou');
+    const mods = (data.utilizador && data.utilizador.modulos) || [];
+    if (modulo && mods.indexOf(modulo) === -1) throw new Error(MSG_SEM_ACESSO);
     localStorage.setItem(TOKEN_KEY, data.token);
     localStorage.setItem(USER_KEY, JSON.stringify(data.utilizador));
     return data.utilizador;
@@ -228,13 +240,7 @@ const FixerAuth = (function () {
         erroEl.textContent = '';
         btn.disabled = true; btn.textContent = 'A entrar...';
         try {
-          const u = await login(emailEl.value.trim(), passEl.value);
-          if (modulo && u.modulos.indexOf(modulo) === -1) {
-            limparSessao();
-            erroEl.textContent = 'A sua conta não tem acesso a este módulo.';
-            btn.disabled = false; btn.textContent = 'Entrar e continuar';
-            return;
-          }
+          const u = await login(emailEl.value.trim(), passEl.value, modulo);
           fechar();
           // Outra conta = outra empresa: o que está no ecrã não lhe pertence → recomeça a app
           if (anterior.email && u.email && anterior.email.toLowerCase() !== String(u.email).toLowerCase()) { location.reload(); return; }
@@ -273,9 +279,9 @@ const FixerAuth = (function () {
   }
   window.fetch = fetchVigiado;
 
-  function renderGate(modulo) {
+  function renderGate(modulo, aviso) {
     var c = coresTema(), cor = c.cor;
-    var nomes = { fiscal: 'FiscalMoz', reconbank: 'ReconBank', docscan: 'DocScan' };
+    var nomes = { fiscal: 'FiscalMoz', reconbank: 'ReconBank', docscan: 'DocScan', relatorios: 'Relatórios' };
     var nome = nomes[modulo] || 'Fixer OS';
     document.body.style.background = c.bg;
     document.body.style.margin = '0';
@@ -302,18 +308,14 @@ const FixerAuth = (function () {
     const emailEl = document.getElementById('fa-email');
     const passEl  = document.getElementById('fa-pass');
     const erroEl  = document.getElementById('fa-erro');
+    if (aviso) erroEl.textContent = aviso;
+    if (aviso && getUser() && getUser().email) emailEl.value = '';
 
     async function tentar() {
       erroEl.textContent = '';
       btn.disabled = true; btn.textContent = 'A entrar...';
       try {
-        const u = await login(emailEl.value.trim(), passEl.value);
-        if (modulo && u.modulos.indexOf(modulo) === -1) {
-          limparSessao();
-          erroEl.textContent = 'A sua conta não tem acesso a este módulo.';
-          btn.disabled = false; btn.textContent = 'Entrar';
-          return;
-        }
+        await login(emailEl.value.trim(), passEl.value, modulo);
         location.reload(); // recarrega para a app principal arrancar normalmente
       } catch (e) {
         erroEl.textContent = e.message;
@@ -372,8 +374,14 @@ const FixerAuth = (function () {
       return getUser();
     }
 
-    limparSessao();
-    renderGate(modulo);
+    // v1.5: sessão válida mas sem este módulo → aviso, SEM apagar a sessão (serve os outros módulos e o painel)
+    if (pareceValido()) {
+      var u = getUser() || {};
+      renderGate(modulo, 'A conta ' + (u.email || '') + ' não tem acesso a este módulo. Entre com uma conta que tenha, ou peça o acesso à Fixer.');
+    } else {
+      limparSessao();
+      renderGate(modulo);
+    }
     throw new Error('login necessário');
   }
 

@@ -57,8 +57,73 @@
   document.head ? document.head.prepend(meta) : document.documentElement.prepend(meta);
 })();
 
+// <diretorio> gerado de tema/diretorio.js (sincronizar_diretorio.py) - nao editar aqui
+// ═══ Fixer OS · directório (B5, 2026-11-18): onde está a retaguarda deste front ═══
+// Fonte única: FIXER/_SISTEMA/tema/diretorio.js. Vai embutido no index.html (build_front.py) e no
+// fixeros-auth.js dos módulos (sincronizar_diretorio.py). Nunca editar as cópias.
+// Ordem: 1) fixeros-config.js ao lado da página (frente no servidor do cliente, B5b);
+//        2) instalação escolhida neste navegador pelo link do cliente ?b=<id> (frente da Fixer, B5a);
+//        3) a Fixer (nível base, como sempre).
+// ?b=0 volta à Fixer. O painel da Fixer (FIXEROS_SO_FIXER) ignora tudo isto.
+var FixerDir = window.FixerDir || (function () {
+  var FIXER_AUTH = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
+  var CHAVE = 'fixeros_diretorio';
+  var RE_EXEC = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+  var MAPA = { fiscal: 'fiscalmoz' };   // id do front -> id do módulo na instalação
+  function valido(d) { return !!(d && typeof d === 'object' && RE_EXEC.test(String(d.auth || ''))); }
+  function local() { return valido(window.FIXEROS_CONFIG) ? window.FIXEROS_CONFIG : null; }
+  function guardado() { try { var d = JSON.parse(localStorage.getItem(CHAVE) || 'null'); return valido(d) ? d : null; } catch (e) { return null; } }
+  function actual() { return window.FIXEROS_SO_FIXER ? null : (local() || guardado()); }
+  function auth() { var d = actual(); return d ? d.auth : FIXER_AUTH; }
+  // URL /exec do módulo: o da instalação, ou '' se a instalação não o tem; sem instalação, o da Fixer.
+  function modulo(id, omissao) {
+    var d = actual(); if (!d) return omissao;
+    if (id === 'hub') return d.auth;   // o hub fala com a Auth
+    var u = String((d.modulos || {})[MAPA[id] || id] || '');
+    return RE_EXEC.test(u) ? u : '';
+  }
+  // Endereço do front de um módulo (o hub usa-o nos cartões).
+  function frente(id, omissao) { var d = actual(); var f = d && d.frentes && d.frentes[MAPA[id] || id]; return f ? String(f) : omissao; }
+  function instalado(id) { return !actual() || id === 'hub' || id === 'painel' || !!modulo(id, ''); }
+  function empresa() { var d = actual(); return d ? String(d.empresa || '') : ''; }
+  function origem() { return window.FIXEROS_SO_FIXER ? 'fixer' : local() ? 'servidor' : guardado() ? 'link' : 'fixer'; }
+  function limparSessao() { try { localStorage.removeItem('fixeros_auth_token'); localStorage.removeItem('fixeros_auth_user'); } catch (e) {} }
+  // Trata ?b= (uma vez por carregamento). Devolve true se a página vai recarregar.
+  async function preparar() {
+    if (window.FIXEROS_SO_FIXER || local()) return false;
+    var q; try { q = new URLSearchParams(location.search); } catch (e) { return false; }
+    if (!q.has('b')) return false;
+    var id = String(q.get('b') || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 32);
+    q.delete('b');
+    var limpa = location.pathname + (q.toString() ? '?' + q.toString() : '') + location.hash;
+    if (!id || id === '0') {
+      try { localStorage.removeItem(CHAVE); } catch (e) {}
+      limparSessao(); location.replace(limpa); return true;
+    }
+    var antes = guardado();
+    if (antes && antes.id === id) { history.replaceState({}, document.title, limpa); return false; }
+    var r = null;
+    try {
+      var resp = await fetch(FIXER_AUTH, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accao: 'nivelb_diretorio', id: id }) });
+      r = await resp.json();
+    } catch (e) { r = null; }
+    history.replaceState({}, document.title, limpa);
+    if (!r || !r.ok || !valido(r)) { erroLink = (r && r.erro) || 'Não foi possível confirmar o link de acesso. Tente de novo ou peça um novo à Fixer.'; return false; }
+    var d = { id: id, auth: r.auth, modulos: r.modulos || {}, empresa: r.empresa || '' };
+    try { localStorage.setItem(CHAVE, JSON.stringify(d)); } catch (e) {}
+    limparSessao();   // a sessão de outra Auth não serve nesta
+    location.replace(limpa); return true;
+  }
+  var erroLink = '';
+  var pronto = (typeof location !== 'undefined') ? preparar() : Promise.resolve(false);
+  return { auth: auth, modulo: modulo, frente: frente, instalado: instalado, empresa: empresa, origem: origem, pronto: pronto,
+    erroLink: function () { return erroLink; }, _preparar: preparar, FIXER_AUTH: FIXER_AUTH };
+})();
+window.FixerDir = FixerDir;
+// </diretorio>
+
 const FixerAuth = (function () {
-  const AUTH_GAS_URL = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec'; // /exec do Auth.gs
+  // B5: a Auth vem do directório (FixerDir, acima): Fixer, link do cliente ou servidor do cliente.
   const TOKEN_KEY = 'fixeros_auth_token';
   const USER_KEY  = 'fixeros_auth_user';
 
@@ -73,7 +138,7 @@ const FixerAuth = (function () {
   // v1.5: com "modulo", só grava a sessão se a conta tiver acesso a esse módulo
   // (assim a sessão que já existia, de outra conta ou de outro módulo, fica intacta).
   async function login(email, password, modulo) {
-    const resp = await fetchOriginal(AUTH_GAS_URL, {
+    const resp = await fetchOriginal(FixerDir.auth(), {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ accao: 'login', email, password })
@@ -150,7 +215,7 @@ const FixerAuth = (function () {
     window.history.replaceState({}, document.title, urlLimpa);
 
     try {
-      const resp = await fetchOriginal(AUTH_GAS_URL, {
+      const resp = await fetchOriginal(FixerDir.auth(), {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ accao: 'validarToken', token: tokenDaUrl, modulo: modulo })
@@ -293,7 +358,7 @@ const FixerAuth = (function () {
           '<div style="width:100%;max-width:380px;background:' + c.card + ';border:1px solid ' + c.borda + ';border-top:6px solid ' + cor + ';border-radius:18px;padding:30px 26px">' +
             '<div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:' + cor + ';margin-bottom:6px">Fixer OS</div>' +
             '<div style="font-size:24px;font-weight:700;color:' + c.texto + ';margin-bottom:4px">' + nome + '</div>' +
-            '<div style="font-size:13.5px;color:' + c.suave + ';margin-bottom:22px">Inicie sessão para continuar.</div>' +
+            '<div style="font-size:13.5px;color:' + c.suave + ';margin-bottom:22px">' + (FixerDir.empresa() ? 'Entrar em ' + String(FixerDir.empresa()).replace(/[&<>"']/g, '') + '.' : 'Inicie sessão para continuar.') + '</div>' +
             '<div style="display:flex;flex-direction:column;gap:12px">' +
               '<input id="fa-email" type="email" placeholder="Email" autocomplete="username" style="background:' + c.campo + ';border:1.5px solid ' + c.borda + ';border-radius:10px;color:' + c.texto + ';padding:13px;font-size:14px;outline:none;font-family:inherit"/>' +
               '<input id="fa-pass" type="password" placeholder="Palavra-passe" autocomplete="current-password" style="background:' + c.campo + ';border:1.5px solid ' + c.borda + ';border-radius:10px;color:' + c.texto + ';padding:13px;font-size:14px;outline:none;font-family:inherit"/>' +
@@ -308,6 +373,7 @@ const FixerAuth = (function () {
     const emailEl = document.getElementById('fa-email');
     const passEl  = document.getElementById('fa-pass');
     const erroEl  = document.getElementById('fa-erro');
+    if (!aviso && FixerDir.erroLink()) aviso = FixerDir.erroLink();   // B5
     if (aviso) erroEl.textContent = aviso;
     if (aviso && getUser() && getUser().email) emailEl.value = '';
 
@@ -334,7 +400,7 @@ const FixerAuth = (function () {
   // ================================================================
   async function mostrarFaixaPlano(modulo) {
     try {
-      const resp = await fetchOriginal(AUTH_GAS_URL, {
+      const resp = await fetchOriginal(FixerDir.auth(), {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ accao: 'validarToken', token: getToken(), modulo: modulo, leitura: true })
@@ -361,6 +427,11 @@ const FixerAuth = (function () {
 
   async function exigirLogin(modulo) {
     document.body.dataset.fixerosModulo = modulo;
+    if (await FixerDir.pronto) return new Promise(function () {});   // B5: link do cliente, a página recarrega
+    if (!FixerDir.instalado(modulo)) {
+      renderGate(modulo, 'Este módulo não está instalado na conta' + (FixerDir.empresa() ? ' de ' + FixerDir.empresa() : '') + '. Peça-o à Fixer.');
+      throw new Error('módulo não instalado');
+    }
 
     // Handoff de SSO — só tenta se ainda não há sessão local válida
     // para este módulo (evita um pedido de rede desnecessário quando

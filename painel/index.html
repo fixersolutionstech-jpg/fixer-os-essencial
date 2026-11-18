@@ -8,6 +8,7 @@
 <title>Painel Fixer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>(function(){var p='pro';try{p=localStorage.getItem('fixeros_pele_painel')||'pro';}catch(e){}document.documentElement.setAttribute('data-pele',p);})();</script>
 <script>
 (function () {
@@ -498,6 +499,10 @@ html[data-tema="dark"] { --bg:#0C0F14;--white:#151A22;--surface:#1C2330;--border
 @media (max-width: 600px) { .tb-dir input[type="search"] { flex: 1 1 100%; min-width: 0; } }
 .u-linha .acoes, .mod-cartao .acoes { justify-content: flex-start; }
 .mod-cartao .acoes { margin-top: auto; }
+/* B3: link de instalacao (longo) e modulos do nivel B */
+.senha-valor.longo { font-size: 13px; letter-spacing: 0; text-align: left; }
+.b-mods { margin: 10px 0; }
+#b-card .nota { margin: 0 0 10px; }
 
 /* ===== Pele PRO (vidro verde-água) — 2026-11-07, teste no Painel Fixer; destinada à versão Pro =====
    Origem: protótipo do Melven (tema/pro/referencia_visual.html). Só se aplica com html[data-pele="pro"];
@@ -934,6 +939,19 @@ html[data-pele="pro"] .view.on > *:nth-child(n+5) { animation-delay: .34s; }
           <div id="f-utilizadores"><div class="vazio">—</div></div>
         </div>
 
+        <div class="card" style="margin-top:14px" id="b-card">
+          <div class="card-head"><h2>Instalação Nível B</h2><button class="ver" onclick="abrirConvite()">+ Convite</button></div>
+          <p class="nota">O Fixer OS fica na conta Google do cliente. O convite gera um link de uso único: o cliente abre-o com essa conta, carrega em Permitir e o resto instala-se sozinho.</p>
+          <div class="form u-form" id="b-form" style="display:none">
+            <div class="linha2">
+              <div class="field"><label for="b-email">Conta Google do cliente</label><input id="b-email" type="email" placeholder="contas.cliente@gmail.com"/></div>
+              <div class="field"><label for="b-horas">Validade (horas)</label><input id="b-horas" type="number" min="1" max="168" value="48"/></div>
+            </div>
+            <div class="acoes"><button class="btn btn-p" id="btn-convite" onclick="criarConvite()">Criar convite</button><button class="btn" onclick="$('b-form').style.display='none'">Cancelar</button></div>
+          </div>
+          <div id="b-estado"><div class="vazio">—</div></div>
+        </div>
+
         <div class="card" style="margin-top:14px">
           <div class="card-head"><h2>Pagamentos</h2></div>
           <div class="lista" id="f-pagamentos"><div class="vazio">—</div></div>
@@ -952,6 +970,19 @@ html[data-pele="pro"] .view.on > *:nth-child(n+5) { animation-delay: .34s; }
           <div class="card-head"><h2 id="mod-titulo">Editar</h2></div>
           <div class="form" id="mod-campos"></div>
           <div class="acoes"><button class="btn btn-p" onclick="gravarFormulario('mod')">Gravar</button><button class="btn" onclick="$('mod-form').style.display='none'">Cancelar</button></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><h2>Nível B: versão para os clientes</h2></div>
+          <div id="nb-estado"><div class="vazio">A carregar...</div></div>
+          <div class="form">
+            <label>Publicar pacote novo (<code>pacote_&lt;versão&gt;.json</code> de <code>FIXER/_SISTEMA/entregas_nivel_b</code>)<input type="file" id="nb-ficheiro" accept=".json,application/json"/></label>
+          </div>
+          <div class="acoes"><button class="btn btn-p" id="nb-btn-pacote" onclick="publicarPacoteB()">Aprovar e publicar</button></div>
+          <div class="form" style="margin-top:10px">
+            <label>URL do Instalador Fixer (/exec)<input id="nb-inst" type="url" placeholder="https://script.google.com/macros/s/.../exec"/></label>
+          </div>
+          <div class="acoes"><button class="btn" onclick="gravarInstaladorB()">Gravar Instalador</button></div>
+          <p class="nota">O pacote fica guardado na folha da Auth da Fixer. Os clientes com manutenção actualizam-se sozinhos (até 3 dias); se algo falhar, voltam à versão anterior.</p>
         </div>
       </section>
 
@@ -1071,10 +1102,10 @@ html[data-pele="pro"] .view.on > *:nth-child(n+5) { animation-delay: .34s; }
 <!-- palavra-passe temporária: mostrada uma só vez -->
 <div class="senha-fundo" id="senha-box" style="display:none">
   <div class="senha-card">
-    <h2>Palavra-passe temporária</h2>
+    <h2 id="senha-titulo">Palavra-passe temporária</h2>
     <p id="senha-para"></p>
     <div class="senha-valor" id="senha-valor"></div>
-    <p class="nota">Só aparece agora. Envie-a ao utilizador por um canal seguro e peça-lhe que a mude em Configurações no primeiro acesso.</p>
+    <p class="nota" id="senha-nota">Só aparece agora. Envie-a ao utilizador por um canal seguro e peça-lhe que a mude em Configurações no primeiro acesso.</p>
     <div class="acoes"><button class="btn btn-p" onclick="copiarSenha()">Copiar</button><button class="btn" onclick="fecharSenha()">Fechar</button></div>
   </div>
 </div>
@@ -1082,13 +1113,78 @@ html[data-pele="pro"] .view.on > *:nth-child(n+5) { animation-delay: .34s; }
 <div class="toast" id="toast"></div>
 
 <script>
+window.FIXEROS_SO_FIXER = true;
+// ═══ Fixer OS · directório (B5, 2026-11-18): onde está a retaguarda deste front ═══
+// Fonte única: FIXER/_SISTEMA/tema/diretorio.js. Vai embutido no index.html (build_front.py) e no
+// fixeros-auth.js dos módulos (sincronizar_diretorio.py). Nunca editar as cópias.
+// Ordem: 1) fixeros-config.js ao lado da página (frente no servidor do cliente, B5b);
+//        2) instalação escolhida neste navegador pelo link do cliente ?b=<id> (frente da Fixer, B5a);
+//        3) a Fixer (nível base, como sempre).
+// ?b=0 volta à Fixer. O painel da Fixer (FIXEROS_SO_FIXER) ignora tudo isto.
+var FixerDir = window.FixerDir || (function () {
+  var FIXER_AUTH = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
+  var CHAVE = 'fixeros_diretorio';
+  var RE_EXEC = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+  var MAPA = { fiscal: 'fiscalmoz' };   // id do front -> id do módulo na instalação
+  function valido(d) { return !!(d && typeof d === 'object' && RE_EXEC.test(String(d.auth || ''))); }
+  function local() { return valido(window.FIXEROS_CONFIG) ? window.FIXEROS_CONFIG : null; }
+  function guardado() { try { var d = JSON.parse(localStorage.getItem(CHAVE) || 'null'); return valido(d) ? d : null; } catch (e) { return null; } }
+  function actual() { return window.FIXEROS_SO_FIXER ? null : (local() || guardado()); }
+  function auth() { var d = actual(); return d ? d.auth : FIXER_AUTH; }
+  // URL /exec do módulo: o da instalação, ou '' se a instalação não o tem; sem instalação, o da Fixer.
+  function modulo(id, omissao) {
+    var d = actual(); if (!d) return omissao;
+    if (id === 'hub') return d.auth;   // o hub fala com a Auth
+    var u = String((d.modulos || {})[MAPA[id] || id] || '');
+    return RE_EXEC.test(u) ? u : '';
+  }
+  // Endereço do front de um módulo (o hub usa-o nos cartões).
+  function frente(id, omissao) { var d = actual(); var f = d && d.frentes && d.frentes[MAPA[id] || id]; return f ? String(f) : omissao; }
+  function instalado(id) { return !actual() || id === 'hub' || id === 'painel' || !!modulo(id, ''); }
+  function empresa() { var d = actual(); return d ? String(d.empresa || '') : ''; }
+  function origem() { return window.FIXEROS_SO_FIXER ? 'fixer' : local() ? 'servidor' : guardado() ? 'link' : 'fixer'; }
+  function limparSessao() { try { localStorage.removeItem('fixeros_auth_token'); localStorage.removeItem('fixeros_auth_user'); } catch (e) {} }
+  // Trata ?b= (uma vez por carregamento). Devolve true se a página vai recarregar.
+  async function preparar() {
+    if (window.FIXEROS_SO_FIXER || local()) return false;
+    var q; try { q = new URLSearchParams(location.search); } catch (e) { return false; }
+    if (!q.has('b')) return false;
+    var id = String(q.get('b') || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 32);
+    q.delete('b');
+    var limpa = location.pathname + (q.toString() ? '?' + q.toString() : '') + location.hash;
+    if (!id || id === '0') {
+      try { localStorage.removeItem(CHAVE); } catch (e) {}
+      limparSessao(); location.replace(limpa); return true;
+    }
+    var antes = guardado();
+    if (antes && antes.id === id) { history.replaceState({}, document.title, limpa); return false; }
+    var r = null;
+    try {
+      var resp = await fetch(FIXER_AUTH, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accao: 'nivelb_diretorio', id: id }) });
+      r = await resp.json();
+    } catch (e) { r = null; }
+    history.replaceState({}, document.title, limpa);
+    if (!r || !r.ok || !valido(r)) { erroLink = (r && r.erro) || 'Não foi possível confirmar o link de acesso. Tente de novo ou peça um novo à Fixer.'; return false; }
+    var d = { id: id, auth: r.auth, modulos: r.modulos || {}, empresa: r.empresa || '' };
+    try { localStorage.setItem(CHAVE, JSON.stringify(d)); } catch (e) {}
+    limparSessao();   // a sessão de outra Auth não serve nesta
+    location.replace(limpa); return true;
+  }
+  var erroLink = '';
+  var pronto = (typeof location !== 'undefined') ? preparar() : Promise.resolve(false);
+  return { auth: auth, modulo: modulo, frente: frente, instalado: instalado, empresa: empresa, origem: origem, pronto: pronto,
+    erroLink: function () { return erroLink; }, _preparar: preparar, FIXER_AUTH: FIXER_AUTH };
+})();
+window.FixerDir = FixerDir;
+
 // ═══ Fixer OS · núcleo comum dos módulos (tema, navegação, histórico, perfil, configurações) ═══
 // Os marcadores __X__ são substituídos pelo gerador (build_front.py).
 const MODULO_ID   = 'painel';
 const MODULO_NOME = 'Painel Fixer';
-const GAS_URL     = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
-const AUTH_URL    = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
-const MODULOS_CONHECIDOS = [['reconbank', 'ReconBank'], ['docscan', 'DocScan'], ['fiscal', 'FiscalMoz']];
+// B5: a retaguarda vem do directório (Fixer, link do cliente ou fixeros-config.js do servidor do cliente)
+const GAS_URL     = FixerDir.modulo('painel', 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec');
+const AUTH_URL    = FixerDir.auth();
+const MODULOS_CONHECIDOS = [['reconbank', 'ReconBank'], ['docscan', 'DocScan'], ['fiscal', 'FiscalMoz'], ['relatorios', 'Relatórios (Pro)']];
 const MESES_NOME = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 const $ = (id) => document.getElementById(id);
@@ -1322,6 +1418,107 @@ async function toBase64(file) {
   });
 }
 
+// ═══ Painel Fixer · B5b (2026-11-18): frente do Fixer OS para o servidor do cliente ═══
+// Gerada aqui, no navegador, a partir dos fronts publicados (mesma origem do painel): não instala nada na Fixer.
+// Leva o hub e os módulos instalados na conta do cliente, cada um com fixeros-config.js = URLs da conta dele.
+const FRENTES_FIXER = {
+  hub:       { base: 'https://fixersolutionstech-jpg.github.io/fixer-os-essencial/', pasta: '',           sw: 'sw.js' },
+  reconbank: { base: 'https://fixersolutionstech-jpg.github.io/Reconbank/',          pasta: 'reconbank/', sw: 'sw.js' },
+  docscan:   { base: 'https://fixersolutionstech-jpg.github.io/Fixer-DocScan/',      pasta: 'docscan/',   sw: 'ocr_sw.js' },
+  fiscalmoz: { base: 'https://fixersolutionstech-jpg.github.io/FiscalmozIVA/',       pasta: 'fiscalmoz/', sw: 'sw.js' }
+};
+const MODULOS_B = ['reconbank', 'docscan', 'fiscalmoz'];
+
+function configFrenteCliente(inst, empresa) {
+  const u = (inst && inst.urls) || {};
+  if (!u.auth || !u.auth.url) throw new Error('Instalação sem URL da Auth do cliente.');
+  const modulos = {}, frentes = {};
+  MODULOS_B.forEach((m) => { if (u[m] && u[m].url) { modulos[m] = u[m].url; frentes[m] = FRENTES_FIXER[m].pasta; } });
+  return { auth: u.auth.url, modulos, frentes, empresa: String(empresa || ''), origem: 'servidor do cliente', gerado: new Date().toISOString().slice(0, 10) };
+}
+function textoConfigCliente(cfg) {
+  return '// Fixer OS · configuração desta instalação (gerada pelo painel Fixer). Não contém segredos.\n' +
+    '// Os endereços apontam para a conta Google do cliente; os documentos ficam lá.\n' +
+    'window.FIXEROS_CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n';
+}
+// Ficheiros de um front: os da cache do service worker + ícones do manifesto + os essenciais.
+function listaFicheirosFrente(swTexto, manifestTexto, swNome) {
+  let lista = [];
+  const m = /ASSETS\s*=\s*(\[[^\]]*\])/.exec(swTexto || '');
+  if (m) { try { lista = JSON.parse(m[1]); } catch (e) { lista = []; } }
+  try { (JSON.parse(manifestTexto).icons || []).forEach((i) => lista.push(i.src)); } catch (e) { /* sem ícones */ }
+  lista = lista.concat(['index.html', 'manifest.json', 'fixeros-auth.js', swNome || 'sw.js']);
+  const out = [];
+  lista.forEach((a) => {
+    a = String(a || '').replace(/^\.\//, '');
+    if (!a || a.endsWith('/') || /^(https?:|\/)/.test(a) || a.indexOf('..') >= 0 || /^painel/.test(a) || a === 'fixeros-config.js') return;
+    if (out.indexOf(a) < 0) out.push(a);
+  });
+  return out;
+}
+function manifestCliente(txt, empresa) {
+  const m = JSON.parse(txt);
+  m.start_url = './'; m.scope = './';
+  return JSON.stringify(m, null, 2);
+}
+function leiameCliente(empresa, modulos) {
+  return [
+    'Fixer OS - ' + (empresa || 'cliente') + ' - frente para o servidor da empresa',
+    '',
+    'O que e: os ecras do Fixer OS (so ficheiros). Os documentos e os dados ficam na conta Google da empresa;',
+    'estes ficheiros nao guardam nada e nao contem senhas nem chaves.',
+    '',
+    'Como publicar (5 minutos):',
+    '1. Servidor web com HTTPS (nginx, Apache, IIS). Sem HTTPS o Fixer OS nao instala no telemovel.',
+    '2. Copiar o conteudo deste zip para a raiz do site, ex.: https://fixeros.empresa.co.mz/',
+    '   Fica:  /  (entrada)   ' + modulos.map((m) => '/' + FRENTES_FIXER[m].pasta).join('   '),
+    '3. Nao pôr em cache longa: sw.js, ocr_sw.js, manifest.json e fixeros-config.js.',
+    '   nginx:  location ~ (sw\\.js|manifest\\.json|fixeros-config\\.js)$ { add_header Cache-Control "no-cache"; }',
+    '4. O servidor precisa de sair para: script.google.com, fonts.googleapis.com, cdnjs.cloudflare.com.',
+    '5. Abrir o endereco, entrar com o utilizador administrador e testar um documento em cada modulo.',
+    '',
+    'Actualizacoes: a retaguarda (conta Google) actualiza-se sozinha. Quando a Fixer avisar de ecras novos,',
+    'basta substituir estes ficheiros pelo zip novo (o fixeros-config.js mantem-se igual).',
+    '',
+    'Gerado pelo painel Fixer em ' + new Date().toISOString().slice(0, 10) + '. Suporte: Fixer Solutions Technologies.',
+    ''
+  ].join('\r\n');
+}
+// fetcher(url) -> Response; injectável para testes.
+async function gerarZipFrenteCliente(inst, empresa, fetcher, Zip) {
+  fetcher = fetcher || ((u) => fetch(u, { cache: 'no-store' }));
+  Zip = Zip || (typeof JSZip !== 'undefined' ? JSZip : null);
+  if (!Zip) throw new Error('A biblioteca de zip não carregou: verifique a internet e recarregue o painel.');
+  const cfg = configFrenteCliente(inst, empresa), txtCfg = textoConfigCliente(cfg), zip = new Zip(), falhas = [];
+  const ids = ['hub'].concat(MODULOS_B.filter((m) => cfg.modulos[m]));
+  for (const id of ids) {
+    const f = FRENTES_FIXER[id];
+    const ler = async (n, binario) => {
+      const r = await fetcher(f.base + n);
+      if (!r || !r.ok) throw new Error(f.base + n + ' (' + (r ? r.status : 'sem resposta') + ')');
+      return binario ? r.arrayBuffer() : r.text();
+    };
+    let sw = '';
+    try { sw = await ler(f.sw); } catch (e) { sw = ''; }
+    const man = await ler('manifest.json');
+    for (const n of listaFicheirosFrente(sw, man, f.sw)) {
+      try {
+        let c;
+        if (n === 'manifest.json') c = manifestCliente(man, empresa);
+        else if (n === f.sw && sw) c = sw;
+        else c = await ler(n, /\.(png|jpe?g|svg|ico|webp|gif)$/i.test(n));
+        zip.file(f.pasta + n, c);
+      } catch (e) {
+        if (n === 'index.html' || n === 'fixeros-auth.js') throw new Error('Falta um ficheiro essencial: ' + e.message);
+        falhas.push(f.pasta + n);
+      }
+    }
+    zip.file(f.pasta + 'fixeros-config.js', txtCfg);
+  }
+  zip.file('LEIA-ME.txt', leiameCliente(empresa, ids.filter((i) => i !== 'hub')));
+  return { blob: await zip.generateAsync({ type: 'blob' }), falhas, config: cfg, modulos: ids };
+}
+
 // ═══ Painel Fixer (admin) · centro de controlo: clientes, utilizadores, módulos, planos, subscrições ═══
 // Fala só com a Auth (acções admin_*); o servidor recusa tudo a quem não é admin.
 // Mesma origem do hub (…/fixer-os-essencial/painel/) = mesma sessão no localStorage.
@@ -1454,9 +1651,13 @@ function opcoesPlanos(selId, valor) {
 function hojeMais(dias) { const d = new Date(); d.setDate(d.getDate() + dias); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
 // ── palavra-passe temporária (mostrada uma só vez) ──
-function mostrarSenha(email, senha) {
-  $('senha-para').textContent = 'Utilizador: ' + email;
+const NOTA_SENHA = 'Só aparece agora. Envie-a ao utilizador por um canal seguro e peça-lhe que a mude em Configurações no primeiro acesso.';
+function mostrarSenha(email, senha, titulo, nota) {
+  $('senha-titulo').textContent = titulo || 'Palavra-passe temporária';
+  $('senha-nota').textContent = nota || NOTA_SENHA;
+  $('senha-para').textContent = titulo ? email : 'Utilizador: ' + email;
   $('senha-valor').textContent = senha;
+  $('senha-valor').classList.toggle('longo', String(senha).length > 30);
   $('senha-box').style.display = 'flex';
 }
 function copiarSenha() {
@@ -1524,7 +1725,7 @@ function renderClientes() {
     const mods = s ? String(s.modulos || '').split(',').filter(Boolean).map(nomeModulo).join(', ') : '';
     const uso = c.uso.total + (c.estado.limite ? ' <span class="mini' + (c.estado.nivelLimite ? ' o' : '') + '">' + c.estado.percentagem + '%</span>' : '');
     return '<tr class="clicavel" onclick="abrirCliente(\'' + esc(c.clienteId) + '\')">' +
-      '<td><div class="t-nome">' + esc(c.empresa) + '</div><div class="t-sub">' + esc(c.clienteId) + ' · ' + c.utilizadoresActivos + ' utilizador(es)</div></td>' +
+      '<td><div class="t-nome">' + esc(c.empresa) + marcaNivelB(c.nivelB) + '</div><div class="t-sub">' + esc(c.clienteId) + ' · ' + c.utilizadoresActivos + ' utilizador(es)</div></td>' +
       '<td>' + (s ? '<div class="t-nome">' + esc(s.escalao) + '</div><div class="t-sub">' + esc(mods || 'sem módulos') + '</div>' : '—') + '</td>' +
       '<td>' + (s ? fmtDia(s.pagoAte) : '—') + '</td>' +
       '<td>' + badgeEstado(c) + '</td>' +
@@ -1598,6 +1799,8 @@ function abrirCliente(cid) {
   irPara('ficha');
   carregarPagamentos(c.clienteId);
   carregarUtilizadores(c.clienteId);
+  $('b-form').style.display = 'none';
+  carregarNivelB(c.clienteId);
 }
 function proximoFimDeMes(iso) {
   const m = String(iso || '').match(/^(\d{4})-(\d{2})/);
@@ -1742,9 +1945,207 @@ async function reporPassword(i) {
   } catch (e) { toast(e.message, 'err'); }
 }
 
+// ── NÍVEL B (B3): convites, instalação na conta Google do cliente, versões e saúde ──
+const NOMES_B = { auth: 'Auth', reconbank: 'ReconBank', docscan: 'DocScan', fiscalmoz: 'FiscalMoz' };
+const ROTULO_B = { pendente: ['Convite por usar', 'av'], expirado: ['Convite expirado', ''], cancelado: ['Convite cancelado', ''], instalado: ['Instalado', 'ok'] };
+let instalacoesB = [], configB = {};
+const saudeB = {};   // url -> { ok, versao } | { ok:false }
+function marcaNivelB(n) {
+  if (!n || n.estado === 'sem_convite') return '';
+  if (n.estado === 'instalado') return ' <span class="badge' + (n.desactualizado ? ' av' : '') + '">Nível B' + (n.versao ? ' · ' + esc(n.versao) : '') + (n.desactualizado ? ' · desactualizado' : '') + '</span>';
+  return ' <span class="badge av">Nível B · convite</span>';
+}
+async function carregarNivelB(cid) {
+  $('b-estado').innerHTML = '<div class="vazio">A carregar...</div>';
+  try {
+    const r = await admin('admin_instalacoes', { clienteId: cid });
+    if (!clienteAberto || clienteAberto.clienteId !== cid) return;
+    instalacoesB = r.instalacoes || [];
+    configB = r.nivelB || {};
+    renderNivelB();
+    await verificarSaudeB();
+  } catch (e) { $('b-estado').innerHTML = '<div class="vazio">' + esc(e.message) + '</div>'; }
+}
+function instalacaoActualB() { return instalacoesB.find((i) => i.estado === 'instalado') || null; }
+function renderNivelB() {
+  const inst = instalacaoActualB();
+  const partes = [];
+  if (inst) {
+    const desact = configB.versaoActual && inst.versao && inst.versao !== configB.versaoActual;
+    partes.push('<div class="faixa ' + (desact ? 'av' : 'ok') + '">Instalado na conta ' + esc(inst.contaInstalou || inst.email) + ' a ' + fmtDia(inst.instaladoEm) +
+      ' · versão ' + esc(inst.versao || '—') + (desact ? ' · desactualizado (aprovada: ' + esc(configB.versaoActual) + ')' : (configB.versaoActual ? ' · em dia' : '')) + '</div>');
+    partes.push('<div class="b-mods">' + Object.keys(NOMES_B).map((m) => {
+      const u = (inst.urls || {})[m];
+      if (!u || !u.url) return '<div class="uso-l"><span>' + NOMES_B[m] + '</span><b class="t-sub">sem URL</b></div>';
+      const s = saudeB[u.url];
+      const est = !s ? '<span class="ponto"></span>A verificar...' : s.ok ? '<span class="ponto ok"></span>Online · ' + esc(s.versao || '') : '<span class="ponto er"></span>Indisponível';
+      return '<div class="uso-l"><span><a href="' + esc(u.url) + '" target="_blank" rel="noopener">' + NOMES_B[m] + '</a></span><b class="mod-estado">' + est + '</b></div>';
+    }).join('') + '</div>');
+    // B4: actualizacoes (a Auth do cliente verifica sozinha de 3 em 3 dias)
+    const est = inst.estadoActualizacao ? String(inst.estadoActualizacao) : '';
+    const corEst = /^actualizado/.test(est) ? 'ok' : /^(falhou|precisa_autorizacao)/.test(est) ? 'av' : '';
+    partes.push('<p class="nota">Actualizações automáticas de ' + (configB.intervaloDias || 3) + ' em ' + (configB.intervaloDias || 3) + ' dias · última verificação: ' +
+      (inst.ultimaVerificacao ? fmtData(new Date(inst.ultimaVerificacao)) : 'ainda nenhuma') + '</p>' +
+      (est ? '<div class="faixa ' + corEst + '">' + esc(textoEstadoB(est)) + '</div>' : '') +
+      (!inst.actualizavel ? '<p class="nota">Instalação anterior ao actualizador: só se actualiza reinstalando com o Instalador novo.</p>' : '') +
+      (inst.actualizavel && !configB.pacotePronto ? '<p class="nota">Falta aprovar o pacote (NIVEL_B_PACOTE_ID e NIVEL_B_PACOTE_SHA256 nas Script Properties da Auth).</p>' : ''));
+    // B6: modalidade (com/sem manutenção). Nunca bloqueia o cliente; só decide se recebe actualizações.
+    partes.push('<div class="t-sub" style="margin:10px 0 6px">Modalidade</div>' +
+      '<div class="faixa ' + (inst.actualizacoes ? 'ok' : 'av') + '">' + esc(inst.textoManutencao || '') + '</div>' +
+      '<div class="acoes">' + (inst.comManutencao
+        ? '<button class="btn" onclick="mudarManutencaoB(false)">Passar a sem manutenção</button>'
+        : '<button class="btn btn-ok" onclick="mudarManutencaoB(true)">Passar a com manutenção</button>') + '</div>');
+    // B5: como a equipa do cliente entra (frente da Fixer pelo link, ou frente no servidor dele)
+    partes.push('<div class="b-acesso"><div class="t-sub" style="margin:10px 0 6px">Acesso da equipa do cliente</div>' +
+      (inst.linkCliente
+        ? '<div class="faixa ok" style="word-break:break-all">' + esc(inst.linkCliente) + '</div>' +
+          '<div class="acoes"><button class="btn" onclick="copiarLinkB()">Copiar link</button>' +
+          '<button class="btn" onclick="location.href=mailtoLinkB(instalacaoActualB())">Enviar por email</button>' +
+          '<button class="btn" id="btn-zip-b" onclick="descarregarFrenteB()">Frente para o servidor do cliente (.zip)</button></div>' +
+          '<p class="nota">O link usa os ecrãs da Fixer com a conta Google do cliente. O .zip é para o cliente pôr os ecrãs no servidor dele (domínio próprio); os documentos ficam sempre na conta dele.</p>'
+        : '<p class="nota">Instalação anterior ao link de acesso (B5): reinstalar com o Instalador novo.</p>') + '</div>');
+    const podeActualizar = inst.actualizavel && configB.pacotePronto && desact && inst.actualizacoes !== false;
+    partes.push('<div class="acoes"><button class="btn" onclick="verificarSaudeB(true)">Verificar agora</button>' +
+      (podeActualizar ? '<button class="btn btn-pri" id="btn-actualizar-b" onclick="actualizarNivelB()">Actualizar agora para ' + esc(configB.versaoActual) + '</button>' : '') + '</div>');
+  } else {
+    partes.push('<div class="faixa">' + (instalacoesB.some((i) => i.estado === 'pendente') ? 'Convite enviado, à espera de o cliente instalar.' : 'Ainda não está instalado na conta Google do cliente.') + '</div>');
+  }
+  if (!configB.instaladorUrl) partes.push('<p class="nota">Falta o INSTALADOR_URL nas Script Properties da Auth: o convite mostra só o código.</p>');
+  const hist = instalacoesB.map((i) => {
+    const r = ROTULO_B[i.estado] || [i.estado, ''];
+    return '<div class="li"><div class="li-ic">B</div><div class="li-body"><div class="li-t">' + esc(i.email) + ' <span class="badge ' + r[1] + '">' + esc(r[0]) + '</span></div>' +
+      '<div class="li-m">' + esc(['criado ' + fmtData(new Date(i.criadoEm)), i.estado === 'pendente' ? 'expira ' + fmtData(new Date(i.expiraEm)) : '', i.instaladoEm ? 'instalado ' + fmtDia(i.instaladoEm) : '', i.versao ? 'v' + i.versao : '', i.criadoPor].filter(Boolean).join(' · ')) + '</div></div>' +
+      (i.estado === 'pendente' ? '<button class="btn btn-av" onclick="cancelarConvite(\'' + esc(i.id) + '\')">Cancelar</button>' : '') + '</div>';
+  }).join('');
+  partes.push('<div class="lista">' + (hist || '<div class="vazio">Sem convites.</div>') + '</div>');
+  $('b-estado').innerHTML = partes.join('');
+}
+async function verificarSaudeB(forcar) {
+  const inst = instalacaoActualB();
+  if (!inst) return;
+  const urls = Object.values(inst.urls || {}).map((u) => u && u.url).filter(Boolean);
+  if (forcar) urls.forEach((u) => { delete saudeB[u]; });
+  renderNivelB();
+  await Promise.all(urls.filter((u) => !saudeB[u]).map(async (u) => {
+    try { const j = await (await fetch(u)).json(); saudeB[u] = { ok: !!j.ok, versao: j.versao }; } catch (e) { saudeB[u] = { ok: false }; }
+  }));
+  renderNivelB();
+}
+function abrirConvite() {
+  if (!clienteAberto) return;
+  const ultimo = instalacoesB[0];
+  $('b-email').value = ultimo ? ultimo.email : '';
+  $('b-horas').value = 48;
+  $('b-form').style.display = 'flex';
+  $('b-email').focus();
+}
+async function criarConvite() {
+  if (!clienteAberto) return;
+  const btn = $('btn-convite'); btn.disabled = true;
+  try {
+    const r = await admin('admin_criarConvite', { convite: { clienteId: clienteAberto.clienteId, email: $('b-email').value, validadeHoras: $('b-horas').value } });
+    $('b-form').style.display = 'none';
+    mostrarSenha('Para a conta Google ' + r.email + ' · válido até ' + fmtData(new Date(r.expiraEm)), r.link || r.codigo,
+      r.link ? 'Link de instalação' : 'Código do convite',
+      'Só aparece agora (a Fixer guarda apenas uma impressão do código). Envie-o ao cliente: serve uma vez e só com essa conta Google.');
+    await carregarNivelB(clienteAberto.clienteId);
+  } catch (e) { toast(e.message, 'err'); } finally { btn.disabled = false; }
+}
+const ESTADOS_ACT_B = { actualizado: 'Actualizado', falhou: 'A última actualização falhou e voltou à versão anterior', falhou_sem_repor: 'A actualização falhou e NÃO conseguiu voltar atrás: a Fixer tem de intervir',
+  precisa_autorizacao: 'Precisa de autorização do cliente (versão nova pede permissões novas)', pedido: 'Pedido enviado' };
+function textoEstadoB(est) {
+  const k = est.indexOf(':'), cod = k < 0 ? est : est.slice(0, k), resto = k < 0 ? '' : est.slice(k + 1).trim();
+  return (ESTADOS_ACT_B[cod] || cod) + (resto ? ' · ' + resto : '');
+}
+async function mudarManutencaoB(com) {
+  if (!clienteAberto) return;
+  if (!com && !confirm('Passar a sem manutenção? O cliente continua a trabalhar na versão instalada, mas deixa de receber actualizações.')) return;
+  try {
+    const r = await admin('admin_nivelbManutencao', { clienteId: clienteAberto.clienteId, manutencao: com });
+    toast(r.mensagem, 'ok');
+    await carregarNivelB(clienteAberto.clienteId);
+  } catch (e) { toast(e.message, 'err'); }
+}
+// ── NÍVEL B (Fixer): versão para os clientes e Instalador (vista Módulos) ──
+function renderConfigNivelB() {
+  const c = (resumo && resumo.nivelB) || {}, el = $('nb-estado');
+  if (!el) return;
+  el.innerHTML = '<div class="faixa ' + (c.pacotePronto ? 'ok' : 'av') + '">' + (c.pacotePronto ? 'Versão aprovada para os clientes: <b>' + esc(c.versaoActual) + '</b>' : 'Ainda não há pacote aprovado: os clientes ficam na versão que instalaram.') + '</div>' +
+    '<p class="nota">Instalador: ' + (c.instaladorUrl ? esc(c.instaladorUrl) : 'por configurar (os convites mostram só o código)') + '</p>';
+  if ($('nb-inst') && !$('nb-inst').value) $('nb-inst').value = c.instaladorUrl || '';
+}
+async function sha256Texto(t) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+async function publicarPacoteB() {
+  const f = $('nb-ficheiro').files[0];
+  if (!f) { toast('Escolha o ficheiro pacote_<versão>.json (FIXER/_SISTEMA/entregas_nivel_b).', 'err'); return; }
+  const texto = await f.text();
+  let versao = '';
+  try { versao = JSON.parse(texto).versao; } catch (e) { toast('O ficheiro não é um pacote válido.', 'err'); return; }
+  if (!confirm('Aprovar a versão ' + versao + ' para todos os clientes Nível B com manutenção? Recebem-na na próxima verificação (até 3 dias) ou já, com "Actualizar agora".')) return;
+  const btn = $('nb-btn-pacote'); btn.disabled = true;
+  try {
+    const r = await admin('admin_nivelbConfigurar', { pacote: texto, sha256: await sha256Texto(texto) });
+    toast(r.mensagem, 'ok'); resumo.nivelB = r.nivelB; renderConfigNivelB(); $('nb-ficheiro').value = '';
+  } catch (e) { toast(e.message, 'err'); } finally { btn.disabled = false; }
+}
+async function gravarInstaladorB() {
+  try {
+    const r = await admin('admin_nivelbConfigurar', { instaladorUrl: $('nb-inst').value.trim() });
+    toast(r.mensagem, 'ok'); resumo.nivelB = r.nivelB; renderConfigNivelB();
+  } catch (e) { toast(e.message, 'err'); }
+}
+function mailtoLinkB(inst) {
+  const emp = (clienteAberto && clienteAberto.empresa) || '';
+  const corpo = 'Bom dia,\n\nO Fixer OS já está instalado na conta Google da ' + emp + '.\n\nEndereço para toda a equipa (guardar nos favoritos ou instalar no telemóvel):\n' + inst.linkCliente +
+    '\n\nNo primeiro acesso, entre com o utilizador e a palavra-passe que receberam. Os documentos ficam na vossa conta Google.\n\nFixer Solutions Technologies';
+  return 'mailto:' + encodeURIComponent(inst.contaInstalou || inst.email || '') + '?subject=' + encodeURIComponent('Fixer OS - endereço de acesso') + '&body=' + encodeURIComponent(corpo);
+}
+async function copiarLinkB() {
+  const inst = instalacaoActualB(); if (!inst || !inst.linkCliente) return;
+  try { await navigator.clipboard.writeText(inst.linkCliente); toast('Link copiado.', 'ok'); } catch (e) { prompt('Copie o link:', inst.linkCliente); }
+}
+async function descarregarFrenteB() {
+  const inst = instalacaoActualB(); if (!inst || !clienteAberto) return;
+  const btn = $('btn-zip-b'); if (btn) { btn.disabled = true; btn.textContent = 'A preparar o .zip...'; }
+  try {
+    const r = await gerarZipFrenteCliente(inst, clienteAberto.empresa);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(r.blob);
+    a.download = 'fixeros_' + String(clienteAberto.empresa || clienteAberto.clienteId).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').toLowerCase() + '_servidor.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    toast('Zip pronto (' + r.modulos.length + ' frentes' + (r.falhas.length ? '; sem: ' + r.falhas.join(', ') : '') + '). Envie-o ao técnico do cliente com o LEIA-ME.', r.falhas.length ? 'err' : 'ok');
+  } catch (e) { toast(e.message, 'err'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Frente para o servidor do cliente (.zip)'; } }
+}
+async function actualizarNivelB() {
+  if (!clienteAberto || !confirm('Pedir à Auth do cliente para se actualizar já para ' + configB.versaoActual + '? Se algo falhar, ela volta sozinha à versão actual.')) return;
+  const btn = $('btn-actualizar-b'); if (btn) btn.disabled = true;
+  try {
+    const r = await admin('admin_nivelbActualizar', { clienteId: clienteAberto.clienteId });
+    // o painel avisa directamente a Auth do cliente (ela vai buscar à Fixer a versão aprovada)
+    const j = await (await fetch(r.authUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accao: 'nivelb_verificarAgora' }) })).json();
+    if (!j.ok) throw new Error(j.erro || 'A Auth do cliente recusou o pedido.');
+    toast(j.agendado ? 'Pedido enviado: a Auth do cliente actualiza para ' + r.versaoAlvo + ' dentro de minutos.' : (j.mensagem || 'Já havia um pedido recente.'), 'ok');
+    await carregarNivelB(clienteAberto.clienteId);
+  } catch (e) { toast(e.message, 'err'); if (btn) btn.disabled = false; }
+}
+async function cancelarConvite(id) {
+  if (!clienteAberto || !confirm('Cancelar este convite? O link deixa de funcionar.')) return;
+  try {
+    const r = await admin('admin_cancelarConvite', { clienteId: clienteAberto.clienteId, id });
+    toast(r.mensagem, 'ok');
+    await carregarNivelB(clienteAberto.clienteId);
+  } catch (e) { toast(e.message, 'err'); }
+}
+
 // ── MÓDULOS ──
 function renderModulos() {
   if (!resumo) return;
+  renderConfigNivelB();   // B6
   const lista = resumo.modulos || [];
   $('mod-grelha').innerHTML = lista.length ? lista.map((m) => {
     const saude = saudeModulos[m.moduloId];

@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#1A202B"/>
 <meta name="referrer" content="no-referrer"/>
 <title>Fixer OS Essencial</title>
+<script src="fixeros-config.js"></script>
 <link rel="manifest" href="manifest.json"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -653,13 +654,77 @@ html[data-tema="dark"] .mod-card { --mod-cor: var(--mod-cor-esc, var(--mod-cor))
 
 
 <script>
+// ═══ Fixer OS · directório (B5, 2026-11-18): onde está a retaguarda deste front ═══
+// Fonte única: FIXER/_SISTEMA/tema/diretorio.js. Vai embutido no index.html (build_front.py) e no
+// fixeros-auth.js dos módulos (sincronizar_diretorio.py). Nunca editar as cópias.
+// Ordem: 1) fixeros-config.js ao lado da página (frente no servidor do cliente, B5b);
+//        2) instalação escolhida neste navegador pelo link do cliente ?b=<id> (frente da Fixer, B5a);
+//        3) a Fixer (nível base, como sempre).
+// ?b=0 volta à Fixer. O painel da Fixer (FIXEROS_SO_FIXER) ignora tudo isto.
+var FixerDir = window.FixerDir || (function () {
+  var FIXER_AUTH = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
+  var CHAVE = 'fixeros_diretorio';
+  var RE_EXEC = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+  var MAPA = { fiscal: 'fiscalmoz' };   // id do front -> id do módulo na instalação
+  function valido(d) { return !!(d && typeof d === 'object' && RE_EXEC.test(String(d.auth || ''))); }
+  function local() { return valido(window.FIXEROS_CONFIG) ? window.FIXEROS_CONFIG : null; }
+  function guardado() { try { var d = JSON.parse(localStorage.getItem(CHAVE) || 'null'); return valido(d) ? d : null; } catch (e) { return null; } }
+  function actual() { return window.FIXEROS_SO_FIXER ? null : (local() || guardado()); }
+  function auth() { var d = actual(); return d ? d.auth : FIXER_AUTH; }
+  // URL /exec do módulo: o da instalação, ou '' se a instalação não o tem; sem instalação, o da Fixer.
+  function modulo(id, omissao) {
+    var d = actual(); if (!d) return omissao;
+    if (id === 'hub') return d.auth;   // o hub fala com a Auth
+    var u = String((d.modulos || {})[MAPA[id] || id] || '');
+    return RE_EXEC.test(u) ? u : '';
+  }
+  // Endereço do front de um módulo (o hub usa-o nos cartões).
+  function frente(id, omissao) { var d = actual(); var f = d && d.frentes && d.frentes[MAPA[id] || id]; return f ? String(f) : omissao; }
+  function instalado(id) { return !actual() || id === 'hub' || id === 'painel' || !!modulo(id, ''); }
+  function empresa() { var d = actual(); return d ? String(d.empresa || '') : ''; }
+  function origem() { return window.FIXEROS_SO_FIXER ? 'fixer' : local() ? 'servidor' : guardado() ? 'link' : 'fixer'; }
+  function limparSessao() { try { localStorage.removeItem('fixeros_auth_token'); localStorage.removeItem('fixeros_auth_user'); } catch (e) {} }
+  // Trata ?b= (uma vez por carregamento). Devolve true se a página vai recarregar.
+  async function preparar() {
+    if (window.FIXEROS_SO_FIXER || local()) return false;
+    var q; try { q = new URLSearchParams(location.search); } catch (e) { return false; }
+    if (!q.has('b')) return false;
+    var id = String(q.get('b') || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 32);
+    q.delete('b');
+    var limpa = location.pathname + (q.toString() ? '?' + q.toString() : '') + location.hash;
+    if (!id || id === '0') {
+      try { localStorage.removeItem(CHAVE); } catch (e) {}
+      limparSessao(); location.replace(limpa); return true;
+    }
+    var antes = guardado();
+    if (antes && antes.id === id) { history.replaceState({}, document.title, limpa); return false; }
+    var r = null;
+    try {
+      var resp = await fetch(FIXER_AUTH, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accao: 'nivelb_diretorio', id: id }) });
+      r = await resp.json();
+    } catch (e) { r = null; }
+    history.replaceState({}, document.title, limpa);
+    if (!r || !r.ok || !valido(r)) { erroLink = (r && r.erro) || 'Não foi possível confirmar o link de acesso. Tente de novo ou peça um novo à Fixer.'; return false; }
+    var d = { id: id, auth: r.auth, modulos: r.modulos || {}, empresa: r.empresa || '' };
+    try { localStorage.setItem(CHAVE, JSON.stringify(d)); } catch (e) {}
+    limparSessao();   // a sessão de outra Auth não serve nesta
+    location.replace(limpa); return true;
+  }
+  var erroLink = '';
+  var pronto = (typeof location !== 'undefined') ? preparar() : Promise.resolve(false);
+  return { auth: auth, modulo: modulo, frente: frente, instalado: instalado, empresa: empresa, origem: origem, pronto: pronto,
+    erroLink: function () { return erroLink; }, _preparar: preparar, FIXER_AUTH: FIXER_AUTH };
+})();
+window.FixerDir = FixerDir;
+
 // ═══ Fixer OS · núcleo comum dos módulos (tema, navegação, histórico, perfil, configurações) ═══
 // Os marcadores __X__ são substituídos pelo gerador (build_front.py).
 const MODULO_ID   = 'hub';
 const MODULO_NOME = 'Fixer OS';
-const GAS_URL     = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
-const AUTH_URL    = 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec';
-const MODULOS_CONHECIDOS = [['reconbank', 'ReconBank'], ['docscan', 'DocScan'], ['fiscal', 'FiscalMoz']];
+// B5: a retaguarda vem do directório (Fixer, link do cliente ou fixeros-config.js do servidor do cliente)
+const GAS_URL     = FixerDir.modulo('hub', 'https://script.google.com/macros/s/AKfycbxutHxDOeP4sYDyYLRk5psXl8ZXfWm-_sO09w_CZClBhwCvel7qHR04TbLOXpJFdT9wDA/exec');
+const AUTH_URL    = FixerDir.auth();
+const MODULOS_CONHECIDOS = [['reconbank', 'ReconBank'], ['docscan', 'DocScan'], ['fiscal', 'FiscalMoz'], ['relatorios', 'Relatórios (Pro)']];
 const MESES_NOME = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 const $ = (id) => document.getElementById(id);
@@ -937,20 +1002,25 @@ const FixerAuth = (function () {
     } catch (e) { /* segue sem faixa */ }
   }
   // Mostra a aplicação se há sessão válida; senão mostra a entrada.
-  function exigirLogin() {
-    return new Promise((resolve, reject) => {
-      document.body.classList.add('auth-ok'); // o hub tem o seu próprio ecrã de entrada
-      if (pareceValido() && getUser()) {
-        $('gate').style.display = 'none';
-        $('app').style.display = 'block';
-        mostrarFaixaPlano();   // P3: sem await, nunca atrasa o arranque
-        resolve();
-      } else {
-        $('gate').style.display = 'flex';
-        $('app').style.display = 'none';
-        reject(new Error('sem sessão'));
-      }
-    });
+  async function exigirLogin() {
+    if (await FixerDir.pronto) return new Promise(() => {});   // B5: link do cliente, a página recarrega
+    document.body.classList.add('auth-ok'); // o hub tem o seu próprio ecrã de entrada
+    if (pareceValido() && getUser()) {
+      $('gate').style.display = 'none';
+      $('app').style.display = 'block';
+      mostrarFaixaPlano();   // P3: sem await, nunca atrasa o arranque
+      return;
+    }
+    $('gate').style.display = 'flex';
+    $('app').style.display = 'none';
+    entradaDaInstalacao();
+    throw new Error('sem sessão');
+  }
+  // B5: diz em que instalação se está a entrar (nível B) e mostra erros do link.
+  function entradaDaInstalacao() {
+    const emp = FixerDir.empresa();
+    if (emp && !$('gate-inst')) $('in-email').closest('.field').insertAdjacentHTML('beforebegin', '<div id="gate-inst" class="gate-sub" style="margin-top:-6px">Entrar em <b>' + esc(emp) + '</b></div>');
+    if (FixerDir.erroLink()) $('gate-erro').textContent = FixerDir.erroLink();
   }
   return { login, logout, getToken, getUser, exigirLogin };
 })();
@@ -974,13 +1044,13 @@ async function tentarLogin() {
 // ── MÓDULOS (cada um com a sua cor; SSO por querystring) ──
 const MODULOS = [
   { id: 'fiscal', nome: 'FiscalMoz', tag: 'Declaração de IVA e Modelo A, com relatório de conformidade.',
-    url: 'https://fixersolutionstech-jpg.github.io/FiscalmozIVA/', cor: '#1D5FA6', corEsc: '#5BA3EA', cl: 'rgba(29,95,166,.14)',
+    url: FixerDir.frente('fiscal', 'https://fixersolutionstech-jpg.github.io/FiscalmozIVA/'), cor: '#1D5FA6', corEsc: '#5BA3EA', cl: 'rgba(29,95,166,.14)',
     icone: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 18h4"/>' },
   { id: 'reconbank', nome: 'ReconBank', tag: 'Reconciliação bancária entre extracto e razão, com relatório.',
-    url: 'https://fixersolutionstech-jpg.github.io/Reconbank/', cor: '#0E6B54', corEsc: '#3CC283', cl: 'rgba(14,107,84,.14)',
+    url: FixerDir.frente('reconbank', 'https://fixersolutionstech-jpg.github.io/Reconbank/'), cor: '#0E6B54', corEsc: '#3CC283', cl: 'rgba(14,107,84,.14)',
     icone: '<path d="M7 16H3m0 0 4-4M3 16l4 4M17 8h4m0 0-4-4m4 4-4 4"/>' },
   { id: 'docscan', nome: 'DocScan', tag: 'Leitura de documentos e classificação PGC, em lote.',
-    url: 'https://fixersolutionstech-jpg.github.io/Fixer-DocScan/', cor: '#C4561C', corEsc: '#F0834A', cl: 'rgba(196,86,28,.14)',
+    url: FixerDir.frente('docscan', 'https://fixersolutionstech-jpg.github.io/Fixer-DocScan/'), cor: '#C4561C', corEsc: '#F0834A', cl: 'rgba(196,86,28,.14)',
     icone: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' }
 ];
 const NOME_MODULO = { fiscal: 'FiscalMoz', reconbank: 'ReconBank', docscan: 'DocScan' };
@@ -1010,7 +1080,7 @@ function renderModulos() {
   ['mod-row', 'mod-row-ini'].forEach((id) => {
     const c = $(id);
     c.innerHTML = '';
-    MODULOS.forEach((m) => c.appendChild(cartaoModulo(m, activos)));
+    MODULOS.filter((m) => FixerDir.instalado(m.id)).forEach((m) => c.appendChild(cartaoModulo(m, activos)));   // B5: só os da instalação
   });
 }
 

@@ -397,7 +397,7 @@ html[data-tema="dark"] .kico.mod-doc    { color: #F0834A; }
 .sec-h h2 { margin: 0; font-size: 16px; font-weight: 700; }
 
 /* módulos */
-.mod-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px; }
+.mod-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
 .mod-card { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 18px; background: var(--white); border: 1px solid var(--border); border-top: 4px solid var(--mod-cor); border-radius: var(--r3); text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform .15s, box-shadow .15s; }
 .mod-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .mod-card.locked { opacity: .55; cursor: not-allowed; }
@@ -423,7 +423,13 @@ html[data-tema="dark"] .mod-card { --mod-cor: var(--mod-cor-esc, var(--mod-cor))
 .gate-sub { margin: 0 0 22px; font-size: 13.5px; color: var(--text2); }
 .gate-erro { color: var(--vermelho); font-size: 12.5px; min-height: 18px; margin-top: 10px; }
 .gate-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--text3); text-align: center; }
+@media (max-width: 1200px) { .mod-row { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 960px) { .mod-row { grid-template-columns: 1fr; } }
+
+/* Módulos Pro (2026-11-27): marca "Pro" e cartão-montra quando não há acesso */
+.mod-card .mini.pro { background: var(--mod-cl); color: var(--mod-cor); font-weight: 700; letter-spacing: .04em; }
+.mod-card.montra { background: linear-gradient(180deg, var(--mod-cl), var(--white) 70%); border-style: dashed; border-top-style: solid; }
+.mod-card.montra .mod-tag { color: var(--text2); }
 
 </style>
 </head>
@@ -1051,16 +1057,27 @@ const MODULOS = [
     icone: '<path d="M7 16H3m0 0 4-4M3 16l4 4M17 8h4m0 0-4-4m4 4-4 4"/>' },
   { id: 'docscan', nome: 'DocScan', tag: 'Leitura de documentos e classificação PGC, em lote.',
     url: FixerDir.frente('docscan', 'https://fixersolutionstech-jpg.github.io/Fixer-DocScan/'), cor: '#C4561C', corEsc: '#F0834A', cl: 'rgba(196,86,28,.14)',
-    icone: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' }
+    icone: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' },
+  { id: 'relatorios', nome: 'Relatórios', pro: true, tag: 'Relatório de gestão mensal a partir do balancete, com ajustes provados.',
+    url: FixerDir.frente('relatorios', 'https://fixersolutionstech-jpg.github.io/Fixer-Relatorios/'), cor: '#7A1F3D', corEsc: '#E58AA8', cl: 'rgba(122,31,61,.14)',
+    icone: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>' }
 ];
-const NOME_MODULO = { fiscal: 'FiscalMoz', reconbank: 'ReconBank', docscan: 'DocScan' };
+const NOME_MODULO = { fiscal: 'FiscalMoz', reconbank: 'ReconBank', docscan: 'DocScan', relatorios: 'Relatórios' };
+const WHATSAPP_FIXER = '258843984003';   // pedidos de acesso aos módulos Pro
 
 function cartaoModulo(m, activos) {
   const tem = activos.indexOf(m.id) !== -1;
-  const el = document.createElement(tem ? 'a' : 'div');
-  el.className = 'mod-card' + (tem ? '' : ' locked');
+  const montra = !tem && m.pro;   // módulo Pro sem acesso: cartão visível com "Pedir acesso"
+  const el = document.createElement(tem || montra ? 'a' : 'div');
+  el.className = 'mod-card' + (tem ? '' : montra ? ' montra' : ' locked');
   if (tem) {
     el.href = m.url + '?fixerosToken=' + encodeURIComponent(FixerAuth.getToken());
+    el.target = '_blank';
+    el.rel = 'noopener';
+  } else if (montra) {
+    const u = FixerAuth.getUser() || {};
+    el.href = 'https://wa.me/' + WHATSAPP_FIXER + '?text=' + encodeURIComponent(
+      'FIXER OS: quero activar o módulo ' + m.nome + ' (Pro).' + (u.email ? ' Conta: ' + u.email : ''));
     el.target = '_blank';
     el.rel = 'noopener';
   }
@@ -1068,9 +1085,10 @@ function cartaoModulo(m, activos) {
   el.style.setProperty('--mod-cor-esc', m.corEsc);
   el.style.setProperty('--mod-cl', m.cl);
   el.innerHTML = '<div class="mod-ico"><svg class="ic" viewBox="0 0 24 24">' + m.icone + '</svg></div>' +
-    (tem ? '' : '<span class="mini o">Sem acesso</span>') +
+    (m.pro ? '<span class="mini pro">Pro</span>' : tem ? '' : '<span class="mini o">Sem acesso</span>') +
     '<div><div class="mod-nome">' + esc(m.nome) + '</div><div class="mod-tag">' + esc(m.tag) + '</div></div>' +
     (tem ? '<div class="mod-abrir">Abrir módulo <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>'
+         : montra ? '<div class="mod-abrir">Pedir acesso <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>'
          : '<div class="mod-abrir" style="color:var(--text3)">Peça acesso ao administrador</div>');
   return el;
 }
